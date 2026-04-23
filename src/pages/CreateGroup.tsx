@@ -1,208 +1,519 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/PageHeader";
-import { CalendarDays, Users, Coins, Repeat, Shuffle, ListOrdered, Check } from "lucide-react";
-import { formatNaira } from "@/components/Money";
-import { toast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-const amounts = [5000, 10000, 20000, 50000, 100000];
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+import { PageHeader } from "@/components/PageHeader";
+import { formatNaira } from "@/components/Money";
+import { toast } from "@/hooks/use-toast";
+import {
+  CalendarDays,
+  Users,
+  Coins,
+  Repeat,
+  Shuffle,
+  ListOrdered,
+  Check,
+  CalendarIcon,
+  Minus,
+  Plus,
+} from "lucide-react";
+
+const presetAmounts = [5000, 10000, 20000, 50000, 100000];
+
+const formSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(3, "Group name must be at least 3 characters")
+    .max(50, "Keep it under 50 characters"),
+  amount: z
+    .number({ invalid_type_error: "Enter a contribution amount" })
+    .min(500, "Minimum is ₦500")
+    .max(10_000_000, "Amount is too high"),
+  frequency: z.enum(["Weekly", "Monthly"], {
+    required_error: "Choose a frequency",
+  }),
+  members: z
+    .number()
+    .int("Must be a whole number")
+    .min(2, "Need at least 2 members")
+    .max(30, "Maximum is 30 members"),
+  startDate: z.date({ required_error: "Pick a start date" }).refine(
+    (d) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return d >= today;
+    },
+    { message: "Start date can't be in the past" }
+  ),
+  order: z.enum(["random", "manual"], { required_error: "Choose payout order" }),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 const CreateGroup = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
-  const [name, setName] = useState("");
-  const [amount, setAmount] = useState(20000);
-  const [freq, setFreq] = useState<"Weekly" | "Monthly">("Weekly");
-  const [members, setMembers] = useState(8);
-  const [order, setOrder] = useState<"manual" | "random">("random");
+  const [step, setStep] = useState<1 | 2>(1);
 
-  const handleCreate = () => {
-    toast({ title: "Group created! 🎉", description: `Share invite code AJO-NEW${members} to add members.` });
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    mode: "onChange",
+    defaultValues: {
+      name: "",
+      amount: 20000,
+      frequency: "Weekly",
+      members: 8,
+      startDate: new Date(),
+      order: "random",
+    },
+  });
+
+  const values = form.watch();
+
+  const handleNext = async () => {
+    const valid = await form.trigger(["name", "amount", "frequency"]);
+    if (valid) setStep(2);
+  };
+
+  const onSubmit = (data: FormValues) => {
+    toast({
+      title: "Group created! 🎉",
+      description: `"${data.name}" is ready. Share the invite to add members.`,
+    });
     navigate("/dashboard");
   };
 
   return (
     <div className="phone-shell flex flex-col">
-      <PageHeader title="Create new group" subtitle={`Step ${step} of 2`} />
+      <PageHeader
+        title="Create new group"
+        subtitle={`Step ${step} of 2`}
+        back
+      />
       <div className="screen-pad flex-1 flex flex-col">
-        {/* Progress */}
+        {/* Step progress */}
         <div className="flex gap-2 mb-6">
           <div className="flex-1 h-1.5 rounded-full bg-primary" />
-          <div className={cn("flex-1 h-1.5 rounded-full transition-smooth", step === 2 ? "bg-primary" : "bg-muted")} />
+          <div
+            className={cn(
+              "flex-1 h-1.5 rounded-full transition-smooth",
+              step === 2 ? "bg-primary" : "bg-muted"
+            )}
+          />
         </div>
 
-        {step === 1 && (
-          <div className="space-y-6 animate-fade-in">
-            <div>
-              <h2 className="text-xl font-bold mb-1">Group basics</h2>
-              <p className="text-sm text-muted-foreground">Name your group and set the contribution.</p>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Group name</label>
-              <input
-                type="text"
-                placeholder="e.g. Balogun Market Traders"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full bg-card border-2 border-border rounded-2xl px-4 py-3.5 outline-none focus:border-primary transition-smooth font-semibold shadow-soft placeholder:text-muted-foreground/60"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Contribution amount</label>
-              <div className="bg-card border-2 border-border rounded-2xl px-4 py-4 shadow-soft">
-                <div className="flex items-baseline gap-1 mb-3">
-                  <span className="text-2xl font-bold">₦</span>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(Number(e.target.value) || 0)}
-                    className="flex-1 bg-transparent outline-none text-3xl font-extrabold tabular-nums"
-                  />
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex-1 flex flex-col"
+          >
+            {step === 1 && (
+              <div className="space-y-6 animate-fade-in">
+                <div>
+                  <h2 className="text-xl font-bold mb-1">Group basics</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Name your group and set the contribution.
+                  </p>
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                  {amounts.map((a) => (
-                    <button
-                      key={a}
-                      onClick={() => setAmount(a)}
-                      className={cn(
-                        "text-xs font-semibold px-3 py-1.5 rounded-full transition-smooth",
-                        amount === a ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-                      )}
+
+                {/* Name */}
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Group name
+                      </FormLabel>
+                      <FormControl>
+                        <input
+                          {...field}
+                          placeholder="e.g. Balogun Market Traders"
+                          className="w-full bg-card border-2 border-border rounded-2xl px-4 py-3.5 outline-none focus:border-primary transition-smooth font-semibold shadow-soft placeholder:text-muted-foreground/60"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Amount */}
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Contribution amount
+                      </FormLabel>
+                      <FormControl>
+                        <div className="bg-card border-2 border-border rounded-2xl px-4 py-4 shadow-soft focus-within:border-primary transition-smooth">
+                          <div className="flex items-baseline gap-1 mb-3">
+                            <span className="text-2xl font-bold">₦</span>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              value={Number.isNaN(field.value) ? "" : field.value}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === ""
+                                    ? NaN
+                                    : Number(e.target.value)
+                                )
+                              }
+                              onBlur={field.onBlur}
+                              className="flex-1 w-full bg-transparent outline-none text-3xl font-extrabold tabular-nums"
+                            />
+                          </div>
+                          <div className="flex gap-2 flex-wrap">
+                            {presetAmounts.map((a) => (
+                              <button
+                                type="button"
+                                key={a}
+                                onClick={() => field.onChange(a)}
+                                className={cn(
+                                  "text-xs font-semibold px-3 py-1.5 rounded-full transition-smooth",
+                                  field.value === a
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-secondary text-secondary-foreground"
+                                )}
+                              >
+                                {formatNaira(a)}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Frequency */}
+                <FormField
+                  control={form.control}
+                  name="frequency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Frequency
+                      </FormLabel>
+                      <FormControl>
+                        <div className="grid grid-cols-2 gap-3">
+                          {(["Weekly", "Monthly"] as const).map((f) => (
+                            <button
+                              type="button"
+                              key={f}
+                              onClick={() => field.onChange(f)}
+                              className={cn(
+                                "rounded-2xl border-2 p-4 text-left transition-smooth",
+                                field.value === f
+                                  ? "border-primary bg-secondary shadow-soft"
+                                  : "border-border bg-card"
+                              )}
+                            >
+                              <Repeat
+                                className={cn(
+                                  "w-5 h-5 mb-2",
+                                  field.value === f
+                                    ? "text-primary"
+                                    : "text-muted-foreground"
+                                )}
+                              />
+                              <p className="font-bold text-sm">{f}</p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {f === "Weekly" ? "Every 7 days" : "Once a month"}
+                              </p>
+                            </button>
+                          ))}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button
+                  type="button"
+                  size="lg"
+                  onClick={handleNext}
+                  className="w-full h-14 bg-gradient-primary font-bold text-base rounded-2xl shadow-glow"
+                >
+                  Continue
+                </Button>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="space-y-6 animate-fade-in">
+                <div>
+                  <h2 className="text-xl font-bold mb-1">Members & schedule</h2>
+                  <p className="text-sm text-muted-foreground">
+                    How big is the group and who pays first?
+                  </p>
+                </div>
+
+                {/* Members */}
+                <FormField
+                  control={form.control}
+                  name="members"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Number of members
+                      </FormLabel>
+                      <FormControl>
+                        <div className="bg-card border-2 border-border rounded-2xl p-4 shadow-soft">
+                          <div className="flex items-center justify-between mb-3">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                field.onChange(Math.max(2, field.value - 1))
+                              }
+                              className="w-11 h-11 rounded-xl bg-secondary text-secondary-foreground flex items-center justify-center disabled:opacity-40"
+                              disabled={field.value <= 2}
+                              aria-label="Decrease members"
+                            >
+                              <Minus className="w-5 h-5" strokeWidth={2.5} />
+                            </button>
+                            <div className="text-center">
+                              <p className="text-3xl font-extrabold tabular-nums">
+                                {field.value}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground">
+                                members
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                field.onChange(Math.min(30, field.value + 1))
+                              }
+                              className="w-11 h-11 rounded-xl bg-secondary text-secondary-foreground flex items-center justify-center disabled:opacity-40"
+                              disabled={field.value >= 30}
+                              aria-label="Increase members"
+                            >
+                              <Plus className="w-5 h-5" strokeWidth={2.5} />
+                            </button>
+                          </div>
+                          <div className="bg-secondary/60 rounded-xl p-3 text-center">
+                            <p className="text-[11px] text-muted-foreground">
+                              Each payout will be
+                            </p>
+                            <p className="font-bold text-base text-primary">
+                              {formatNaira(
+                                (values.amount || 0) * (field.value || 0)
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Start date */}
+                <FormField
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Start date
+                      </FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className={cn(
+                                "w-full h-auto justify-start gap-3 bg-card border-2 border-border rounded-2xl px-4 py-3.5 shadow-soft hover:bg-card",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarDays className="w-5 h-5 text-primary" />
+                              <span className="font-semibold text-base">
+                                {field.value
+                                  ? format(field.value, "EEE, d MMM yyyy")
+                                  : "Pick a date"}
+                              </span>
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-auto p-0"
+                          align="start"
+                        >
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => {
+                              const today = new Date();
+                              today.setHours(0, 0, 0, 0);
+                              return date < today;
+                            }}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Order */}
+                <FormField
+                  control={form.control}
+                  name="order"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Payout order
+                      </FormLabel>
+                      <FormControl>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            onClick={() => field.onChange("random")}
+                            className={cn(
+                              "rounded-2xl border-2 p-4 text-left transition-smooth",
+                              field.value === "random"
+                                ? "border-primary bg-secondary shadow-soft"
+                                : "border-border bg-card"
+                            )}
+                          >
+                            <Shuffle
+                              className={cn(
+                                "w-5 h-5 mb-2",
+                                field.value === "random"
+                                  ? "text-primary"
+                                  : "text-muted-foreground"
+                              )}
+                            />
+                            <p className="font-bold text-sm">Random</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              Fair to everyone
+                            </p>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => field.onChange("manual")}
+                            className={cn(
+                              "rounded-2xl border-2 p-4 text-left transition-smooth",
+                              field.value === "manual"
+                                ? "border-primary bg-secondary shadow-soft"
+                                : "border-border bg-card"
+                            )}
+                          >
+                            <ListOrdered
+                              className={cn(
+                                "w-5 h-5 mb-2",
+                                field.value === "manual"
+                                  ? "text-primary"
+                                  : "text-muted-foreground"
+                              )}
+                            />
+                            <p className="font-bold text-sm">Manual</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              Admin sets order
+                            </p>
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormDescription className="text-[11px]">
+                        You can change the order later in admin settings.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Summary */}
+                <div className="rounded-2xl bg-gradient-card border border-border p-4 shadow-soft space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                    Summary
+                  </p>
+                  {[
+                    {
+                      i: <Coins className="w-4 h-4" />,
+                      k: "Each contribution",
+                      v: formatNaira(values.amount || 0),
+                    },
+                    {
+                      i: <Repeat className="w-4 h-4" />,
+                      k: "Frequency",
+                      v: values.frequency,
+                    },
+                    {
+                      i: <Users className="w-4 h-4" />,
+                      k: "Members",
+                      v: `${values.members} people`,
+                    },
+                    {
+                      i: <Check className="w-4 h-4" />,
+                      k: "Cycle length",
+                      v: `${values.members} ${
+                        values.frequency === "Weekly" ? "weeks" : "months"
+                      }`,
+                    },
+                  ].map((r, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between text-sm py-1"
                     >
-                      {formatNaira(a)}
-                    </button>
+                      <span className="flex items-center gap-2 text-muted-foreground">
+                        {r.i} {r.k}
+                      </span>
+                      <span className="font-bold">{r.v}</span>
+                    </div>
                   ))}
                 </div>
-              </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Frequency</label>
-              <div className="grid grid-cols-2 gap-3">
-                {(["Weekly", "Monthly"] as const).map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFreq(f)}
-                    className={cn(
-                      "rounded-2xl border-2 p-4 text-left transition-smooth",
-                      freq === f ? "border-primary bg-secondary shadow-soft" : "border-border bg-card"
-                    )}
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    size="lg"
+                    variant="outline"
+                    onClick={() => setStep(1)}
+                    className="h-14 px-6 font-bold text-base rounded-2xl"
                   >
-                    <Repeat className={cn("w-5 h-5 mb-2", freq === f ? "text-primary" : "text-muted-foreground")} />
-                    <p className="font-bold text-sm">{f}</p>
-                    <p className="text-[11px] text-muted-foreground">{f === "Weekly" ? "Every 7 days" : "Once a month"}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <Button
-              size="lg"
-              disabled={name.length < 3 || amount < 100}
-              onClick={() => setStep(2)}
-              className="w-full h-14 bg-gradient-primary font-bold text-base rounded-2xl shadow-glow disabled:opacity-40"
-            >
-              Continue
-            </Button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-6 animate-fade-in">
-            <div>
-              <h2 className="text-xl font-bold mb-1">Members & schedule</h2>
-              <p className="text-sm text-muted-foreground">How big is the group and who pays first?</p>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Number of members</label>
-              <div className="bg-card border-2 border-border rounded-2xl p-4 shadow-soft">
-                <div className="flex items-center justify-between mb-3">
-                  <button
-                    onClick={() => setMembers(Math.max(2, members - 1))}
-                    className="w-11 h-11 rounded-xl bg-secondary text-secondary-foreground font-bold text-xl"
-                  >−</button>
-                  <div className="text-center">
-                    <p className="text-3xl font-extrabold">{members}</p>
-                    <p className="text-[11px] text-muted-foreground">members</p>
-                  </div>
-                  <button
-                    onClick={() => setMembers(Math.min(30, members + 1))}
-                    className="w-11 h-11 rounded-xl bg-secondary text-secondary-foreground font-bold text-xl"
-                  >+</button>
-                </div>
-                <div className="bg-secondary/60 rounded-xl p-3 text-center">
-                  <p className="text-[11px] text-muted-foreground">Each payout will be</p>
-                  <p className="font-bold text-base text-primary">{formatNaira(amount * members)}</p>
+                    Back
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    disabled={form.formState.isSubmitting}
+                    className="flex-1 h-14 bg-gradient-primary font-bold text-base rounded-2xl shadow-glow"
+                  >
+                    Create Group
+                  </Button>
                 </div>
               </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Start date</label>
-              <div className="flex items-center gap-3 bg-card border-2 border-border rounded-2xl px-4 py-3.5 shadow-soft">
-                <CalendarDays className="w-5 h-5 text-primary" />
-                <span className="font-semibold">Today, 23 April 2026</span>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Payout order</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setOrder("random")}
-                  className={cn(
-                    "rounded-2xl border-2 p-4 text-left transition-smooth",
-                    order === "random" ? "border-primary bg-secondary shadow-soft" : "border-border bg-card"
-                  )}
-                >
-                  <Shuffle className={cn("w-5 h-5 mb-2", order === "random" ? "text-primary" : "text-muted-foreground")} />
-                  <p className="font-bold text-sm">Random</p>
-                  <p className="text-[11px] text-muted-foreground">Fair to everyone</p>
-                </button>
-                <button
-                  onClick={() => setOrder("manual")}
-                  className={cn(
-                    "rounded-2xl border-2 p-4 text-left transition-smooth",
-                    order === "manual" ? "border-primary bg-secondary shadow-soft" : "border-border bg-card"
-                  )}
-                >
-                  <ListOrdered className={cn("w-5 h-5 mb-2", order === "manual" ? "text-primary" : "text-muted-foreground")} />
-                  <p className="font-bold text-sm">Manual</p>
-                  <p className="text-[11px] text-muted-foreground">Admin sets order</p>
-                </button>
-              </div>
-            </div>
-
-            {/* Summary */}
-            <div className="rounded-2xl bg-gradient-card border border-border p-4 shadow-soft space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Summary</p>
-              {[
-                { i: <Coins className="w-4 h-4" />, k: "Each contribution", v: formatNaira(amount) },
-                { i: <Repeat className="w-4 h-4" />, k: "Frequency", v: freq },
-                { i: <Users className="w-4 h-4" />, k: "Members", v: `${members} people` },
-                { i: <Check className="w-4 h-4" />, k: "Cycle length", v: `${members} ${freq === "Weekly" ? "weeks" : "months"}` },
-              ].map((r, i) => (
-                <div key={i} className="flex items-center justify-between text-sm py-1">
-                  <span className="flex items-center gap-2 text-muted-foreground">{r.i} {r.k}</span>
-                  <span className="font-bold">{r.v}</span>
-                </div>
-              ))}
-            </div>
-
-            <Button
-              size="lg"
-              onClick={handleCreate}
-              className="w-full h-14 bg-gradient-primary font-bold text-base rounded-2xl shadow-glow"
-            >
-              Create Group
-            </Button>
-          </div>
-        )}
+            )}
+          </form>
+        </Form>
       </div>
     </div>
   );
