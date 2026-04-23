@@ -33,6 +33,10 @@ import {
   CalendarIcon,
   Minus,
   Plus,
+  Copy,
+  Share2,
+  CheckCircle2,
+  MessageCircle,
 } from "lucide-react";
 
 const presetAmounts = [5000, 10000, 20000, 50000, 100000];
@@ -68,9 +72,29 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const generateInviteCode = (name: string) => {
+  const slug =
+    name
+      .replace(/[^a-zA-Z0-9 ]/g, "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 4) || "AJO";
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `AJO-${slug}-${rand}`;
+};
+
 const CreateGroup = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [created, setCreated] = useState<{
+    data: FormValues;
+    inviteCode: string;
+    inviteLink: string;
+  } | null>(null);
+  const [copied, setCopied] = useState<"code" | "link" | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -93,31 +117,84 @@ const CreateGroup = () => {
   };
 
   const onSubmit = (data: FormValues) => {
-    toast({
-      title: "Group created! 🎉",
-      description: `"${data.name}" is ready. Share the invite to add members.`,
-    });
-    navigate("/dashboard");
+    const inviteCode = generateInviteCode(data.name);
+    const inviteLink = `${window.location.origin}/join-group?code=${inviteCode}`;
+    setCreated({ data, inviteCode, inviteLink });
+    setStep(3);
+  };
+
+  const handleCopy = async (value: string, kind: "code" | "link") => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(kind);
+      toast({
+        title: "Copied!",
+        description: kind === "code" ? "Invite code copied" : "Invite link copied",
+      });
+      setTimeout(() => setCopied(null), 2000);
+    } catch {
+      toast({
+        title: "Couldn't copy",
+        description: "Please copy manually",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const buildShareMessage = () => {
+    if (!created) return "";
+    const { data, inviteCode, inviteLink } = created;
+    return `You're invited to join *${data.name}* on Thatech Ajo 💸\n\n• Contribution: ${formatNaira(
+      data.amount
+    )} ${data.frequency.toLowerCase()}\n• Members: ${data.members}\n• Starts: ${format(
+      data.startDate,
+      "EEE, d MMM yyyy"
+    )}\n\nUse invite code: ${inviteCode}\nOr tap: ${inviteLink}`;
+  };
+
+  const handleNativeShare = async () => {
+    if (!created) return;
+    const text = buildShareMessage();
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: created.data.name,
+          text,
+          url: created.inviteLink,
+        });
+      } catch {
+        /* user cancelled */
+      }
+    } else {
+      handleCopy(text, "link");
+    }
+  };
+
+  const handleWhatsApp = () => {
+    const text = encodeURIComponent(buildShareMessage());
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
   };
 
   return (
     <div className="phone-shell flex flex-col">
       <PageHeader
-        title="Create new group"
-        subtitle={`Step ${step} of 2`}
-        back
+        title={step === 3 ? "Group created" : "Create new group"}
+        subtitle={step === 3 ? "Share the invite" : `Step ${step} of 2`}
+        back={step !== 3}
       />
       <div className="screen-pad flex-1 flex flex-col">
-        {/* Step progress */}
-        <div className="flex gap-2 mb-6">
-          <div className="flex-1 h-1.5 rounded-full bg-primary" />
-          <div
-            className={cn(
-              "flex-1 h-1.5 rounded-full transition-smooth",
-              step === 2 ? "bg-primary" : "bg-muted"
-            )}
-          />
-        </div>
+        {/* Step progress (hide on success) */}
+        {step !== 3 && (
+          <div className="flex gap-2 mb-6">
+            <div className="flex-1 h-1.5 rounded-full bg-primary" />
+            <div
+              className={cn(
+                "flex-1 h-1.5 rounded-full transition-smooth",
+                step === 2 ? "bg-primary" : "bg-muted"
+              )}
+            />
+          </div>
+        )}
 
         <Form {...form}>
           <form
@@ -514,6 +591,114 @@ const CreateGroup = () => {
             )}
           </form>
         </Form>
+
+        {step === 3 && created && (
+          <div className="space-y-5 animate-fade-in">
+            {/* Success header */}
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 rounded-full bg-success/15 flex items-center justify-center mb-4 animate-scale-in">
+                <CheckCircle2 className="w-10 h-10 text-success" strokeWidth={2} />
+              </div>
+              <h2 className="text-2xl font-extrabold mb-1">Group created! 🎉</h2>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                Share the invite below to add the {created.data.members - 1} other members to{" "}
+                <span className="font-semibold text-foreground">{created.data.name}</span>.
+              </p>
+            </div>
+
+            {/* Invite code card */}
+            <div className="rounded-3xl bg-gradient-hero text-primary-foreground p-5 shadow-elevated relative overflow-hidden">
+              <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-white/10 blur-3xl" />
+              <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-accent/30 blur-3xl" />
+              <div className="relative">
+                <p className="text-[11px] uppercase tracking-widest opacity-80 font-semibold mb-2">
+                  Invite code
+                </p>
+                <div className="flex items-center justify-between gap-3 bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-3.5 border border-white/15">
+                  <p className="font-extrabold tracking-[0.18em] text-xl tabular-nums truncate">
+                    {created.inviteCode}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(created.inviteCode, "code")}
+                    className="flex-shrink-0 flex items-center gap-1.5 bg-white text-primary font-bold text-xs px-3 py-2 rounded-xl shadow-soft active:scale-95 transition-smooth"
+                    aria-label="Copy invite code"
+                  >
+                    {copied === "code" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" /> Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" /> Copy
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="text-[11px] opacity-80 mt-3 leading-relaxed">
+                  Members can paste this code in <span className="font-semibold">Join Group</span>{" "}
+                  to request access.
+                </p>
+              </div>
+            </div>
+
+            {/* Invite link */}
+            <div className="rounded-2xl bg-card border border-border p-3.5 shadow-soft">
+              <p className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">
+                Invite link
+              </p>
+              <div className="flex items-center gap-2">
+                <p className="flex-1 text-xs font-medium text-foreground/80 truncate">
+                  {created.inviteLink}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(created.inviteLink, "link")}
+                  className="flex-shrink-0 flex items-center gap-1 text-xs font-bold text-primary px-2.5 py-1.5 rounded-lg hover:bg-secondary transition-smooth"
+                >
+                  {copied === "link" ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" /> Copy
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Share actions */}
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                type="button"
+                onClick={handleWhatsApp}
+                className="h-14 bg-[hsl(142_70%_38%)] hover:bg-[hsl(142_70%_34%)] text-white font-bold rounded-2xl shadow-soft"
+              >
+                <MessageCircle className="w-4 h-4 mr-1.5" /> WhatsApp
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleNativeShare}
+                className="h-14 font-bold rounded-2xl border-2"
+              >
+                <Share2 className="w-4 h-4 mr-1.5" /> More
+              </Button>
+            </div>
+
+            {/* Continue */}
+            <Button
+              type="button"
+              size="lg"
+              onClick={() => navigate("/dashboard")}
+              className="w-full h-14 bg-gradient-primary font-bold text-base rounded-2xl shadow-glow"
+            >
+              Done — go to home
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
