@@ -174,26 +174,27 @@ const CreateGroup = () => {
     const text = encodeURIComponent(buildShareMessage());
     window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
   };
-  };
 
   return (
     <div className="phone-shell flex flex-col">
       <PageHeader
-        title="Create new group"
-        subtitle={`Step ${step} of 2`}
-        back
+        title={step === 3 ? "Group created" : "Create new group"}
+        subtitle={step === 3 ? "Share the invite" : `Step ${step} of 2`}
+        back={step !== 3}
       />
       <div className="screen-pad flex-1 flex flex-col">
-        {/* Step progress */}
-        <div className="flex gap-2 mb-6">
-          <div className="flex-1 h-1.5 rounded-full bg-primary" />
-          <div
-            className={cn(
-              "flex-1 h-1.5 rounded-full transition-smooth",
-              step === 2 ? "bg-primary" : "bg-muted"
-            )}
-          />
-        </div>
+        {/* Step progress (hide on success) */}
+        {step !== 3 && (
+          <div className="flex gap-2 mb-6">
+            <div className="flex-1 h-1.5 rounded-full bg-primary" />
+            <div
+              className={cn(
+                "flex-1 h-1.5 rounded-full transition-smooth",
+                step === 2 ? "bg-primary" : "bg-muted"
+              )}
+            />
+          </div>
+        )}
 
         <Form {...form}>
           <form
