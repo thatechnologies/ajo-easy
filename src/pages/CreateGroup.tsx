@@ -33,6 +33,10 @@ import {
   CalendarIcon,
   Minus,
   Plus,
+  Copy,
+  Share2,
+  CheckCircle2,
+  MessageCircle,
 } from "lucide-react";
 
 const presetAmounts = [5000, 10000, 20000, 50000, 100000];
@@ -68,9 +72,29 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const generateInviteCode = (name: string) => {
+  const slug =
+    name
+      .replace(/[^a-zA-Z0-9 ]/g, "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 4) || "AJO";
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `AJO-${slug}-${rand}`;
+};
+
 const CreateGroup = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [created, setCreated] = useState<{
+    data: FormValues;
+    inviteCode: string;
+    inviteLink: string;
+  } | null>(null);
+  const [copied, setCopied] = useState<"code" | "link" | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -93,11 +117,63 @@ const CreateGroup = () => {
   };
 
   const onSubmit = (data: FormValues) => {
-    toast({
-      title: "Group created! 🎉",
-      description: `"${data.name}" is ready. Share the invite to add members.`,
-    });
-    navigate("/dashboard");
+    const inviteCode = generateInviteCode(data.name);
+    const inviteLink = `${window.location.origin}/join-group?code=${inviteCode}`;
+    setCreated({ data, inviteCode, inviteLink });
+    setStep(3);
+  };
+
+  const handleCopy = async (value: string, kind: "code" | "link") => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(kind);
+      toast({
+        title: "Copied!",
+        description: kind === "code" ? "Invite code copied" : "Invite link copied",
+      });
+      setTimeout(() => setCopied(null), 2000);
+    } catch {
+      toast({
+        title: "Couldn't copy",
+        description: "Please copy manually",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const buildShareMessage = () => {
+    if (!created) return "";
+    const { data, inviteCode, inviteLink } = created;
+    return `You're invited to join *${data.name}* on Thatech Ajo 💸\n\n• Contribution: ${formatNaira(
+      data.amount
+    )} ${data.frequency.toLowerCase()}\n• Members: ${data.members}\n• Starts: ${format(
+      data.startDate,
+      "EEE, d MMM yyyy"
+    )}\n\nUse invite code: ${inviteCode}\nOr tap: ${inviteLink}`;
+  };
+
+  const handleNativeShare = async () => {
+    if (!created) return;
+    const text = buildShareMessage();
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: created.data.name,
+          text,
+          url: created.inviteLink,
+        });
+      } catch {
+        /* user cancelled */
+      }
+    } else {
+      handleCopy(text, "link");
+    }
+  };
+
+  const handleWhatsApp = () => {
+    const text = encodeURIComponent(buildShareMessage());
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
+  };
   };
 
   return (
