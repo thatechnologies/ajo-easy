@@ -588,6 +588,7 @@ const CreateGroup = () => {
                   </Button>
                 </div>
               </div>
+            )}
           </form>
         </Form>
 
