@@ -606,41 +606,71 @@ const CreateGroup = () => {
               </p>
             </div>
 
-            {/* Invite code card */}
-            <div className="rounded-3xl bg-gradient-hero text-primary-foreground p-5 shadow-elevated relative overflow-hidden">
+            {/* Invite code card — entire card is one-tap copy */}
+            <button
+              type="button"
+              onClick={() => handleCopy(created.inviteCode, "code")}
+              aria-label={
+                copied === "code" ? "Invite code copied" : "Tap to copy invite code"
+              }
+              aria-live="polite"
+              className="w-full text-left rounded-3xl bg-gradient-hero text-primary-foreground p-5 shadow-elevated relative overflow-hidden active:scale-[0.98] transition-smooth focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/50"
+            >
               <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-white/10 blur-3xl" />
               <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-accent/30 blur-3xl" />
               <div className="relative">
-                <p className="text-[11px] uppercase tracking-widest opacity-80 font-semibold mb-2">
-                  Invite code
-                </p>
-                <div className="flex items-center justify-between gap-3 bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-3.5 border border-white/15">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[11px] uppercase tracking-widest opacity-80 font-semibold">
+                    Invite code
+                  </p>
+                  <span
+                    className={cn(
+                      "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full transition-smooth",
+                      copied === "code"
+                        ? "bg-success text-success-foreground"
+                        : "bg-white/15 text-primary-foreground/90"
+                    )}
+                  >
+                    {copied === "code" ? "Copied ✓" : "Tap to copy"}
+                  </span>
+                </div>
+                <div
+                  className={cn(
+                    "flex items-center justify-between gap-3 backdrop-blur-sm rounded-2xl px-4 py-3.5 border transition-smooth",
+                    copied === "code"
+                      ? "bg-success/25 border-success/40"
+                      : "bg-white/10 border-white/15"
+                  )}
+                >
                   <p className="font-extrabold tracking-[0.18em] text-xl tabular-nums truncate">
                     {created.inviteCode}
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(created.inviteCode, "code")}
-                    className="flex-shrink-0 flex items-center gap-1.5 bg-white text-primary font-bold text-xs px-3 py-2 rounded-xl shadow-soft active:scale-95 transition-smooth"
-                    aria-label="Copy invite code"
+                  <span
+                    className={cn(
+                      "flex-shrink-0 flex items-center gap-1.5 font-bold text-xs px-3 py-2 rounded-xl shadow-soft transition-smooth",
+                      copied === "code"
+                        ? "bg-success text-success-foreground animate-scale-in"
+                        : "bg-white text-primary"
+                    )}
                   >
                     {copied === "code" ? (
                       <>
-                        <Check className="w-3.5 h-3.5" /> Copied
+                        <Check className="w-3.5 h-3.5" strokeWidth={3} /> Copied
                       </>
                     ) : (
                       <>
-                        <Copy className="w-3.5 h-3.5" /> Copy
+                        <Copy className="w-3.5 h-3.5" /> Copy code
                       </>
                     )}
-                  </button>
+                  </span>
                 </div>
                 <p className="text-[11px] opacity-80 mt-3 leading-relaxed">
-                  Members can paste this code in <span className="font-semibold">Join Group</span>{" "}
-                  to request access.
+                  {copied === "code"
+                    ? "Code copied — paste it in WhatsApp or SMS to invite members."
+                    : "Tap anywhere on this card to copy. Members paste it in Join Group."}
                 </p>
               </div>
-            </div>
+            </button>
 
             {/* Invite link */}
             <div className="rounded-2xl bg-card border border-border p-3.5 shadow-soft">
