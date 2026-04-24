@@ -22,6 +22,9 @@ import {
   Smartphone,
   Lock,
   Zap,
+  Share2,
+  Copy,
+  Check,
 } from "lucide-react";
 
 // Formspree endpoint is read from the Vite env var `VITE_FORMSPREE_ENDPOINT`.
@@ -115,6 +118,34 @@ const Landing = () => {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const shareUrl =
+    typeof window !== "undefined" ? window.location.origin + "/" : "";
+  const shareMessage =
+    "I just joined the Thatech Ajo waitlist — the easiest way to run a savings circle without the wahala. Join me 👉 ";
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast({
+        title: "Link copied!",
+        description: "Share it with your group on WhatsApp, SMS, or anywhere.",
+      });
+      setTimeout(() => setCopied(false), 2200);
+    } catch {
+      toast({
+        title: "Couldn't copy",
+        description: "Long-press the link to copy it manually.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(
+    shareMessage + shareUrl
+  )}`;
 
   const isValidEmail = (v: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
@@ -189,6 +220,9 @@ const Landing = () => {
             </a>
             <a href="#testimonials" className="hover:text-foreground transition-smooth">
               Stories
+            </a>
+            <a href="#share" className="hover:text-foreground transition-smooth">
+              Share
             </a>
             <a href="#faq" className="hover:text-foreground transition-smooth">
               FAQ
@@ -496,6 +530,75 @@ const Landing = () => {
                 </figcaption>
               </figure>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Share waitlist */}
+      <section id="share" className="py-20 lg:py-24">
+        <div className="max-w-3xl mx-auto px-5 sm:px-8">
+          <div className="relative bg-card border border-border rounded-[2rem] p-8 sm:p-10 shadow-elevated overflow-hidden">
+            <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-primary/10 blur-3xl" />
+            <div className="absolute -bottom-16 -left-16 w-56 h-56 rounded-full bg-accent/15 blur-3xl" />
+            <div className="relative">
+              <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground rounded-full px-3 py-1.5 text-xs font-bold mb-5">
+                <Share2 className="w-3.5 h-3.5" />
+                Share this waitlist
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Ajo is better with your people.
+              </h2>
+              <p className="mt-3 text-muted-foreground max-w-xl">
+                Invite your group, family, or market crew so you're all ready
+                to start saving together the moment we launch.
+              </p>
+
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 bg-success text-success-foreground font-bold py-3.5 px-5 rounded-2xl shadow-soft hover:opacity-95 active:scale-[0.98] transition-smooth"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="w-5 h-5 fill-current"
+                    aria-hidden="true"
+                  >
+                    <path d="M19.05 4.91A10 10 0 0 0 4.1 18.27L3 22l3.83-1.04A10 10 0 1 0 19.05 4.9Zm-7.06 15.4a8.3 8.3 0 0 1-4.23-1.16l-.3-.18-2.27.62.6-2.22-.2-.32a8.3 8.3 0 1 1 6.4 3.26Zm4.55-6.18c-.25-.13-1.47-.73-1.7-.81-.22-.08-.39-.13-.55.13-.16.25-.63.81-.78.98-.14.16-.29.18-.54.06-.25-.13-1.05-.39-2-1.23a7.5 7.5 0 0 1-1.39-1.72c-.14-.25-.02-.38.11-.5.11-.11.25-.29.38-.43.13-.14.16-.25.25-.41.08-.16.04-.31-.02-.43-.06-.13-.55-1.34-.76-1.83-.2-.48-.4-.41-.55-.42h-.47c-.16 0-.42.06-.64.31-.22.25-.84.82-.84 2 0 1.18.86 2.32.98 2.48.13.16 1.7 2.6 4.12 3.65.58.25 1.03.4 1.38.51.58.18 1.1.16 1.52.1.46-.07 1.43-.58 1.63-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.47-.29Z" />
+                  </svg>
+                  Share on WhatsApp
+                </a>
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className={cn(
+                    "inline-flex items-center justify-center gap-2 font-bold py-3.5 px-5 rounded-2xl border-2 shadow-soft active:scale-[0.98] transition-smooth",
+                    copied
+                      ? "bg-success/10 border-success text-success"
+                      : "bg-card border-border hover:border-primary hover:text-primary"
+                  )}
+                  aria-live="polite"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-5 h-5" /> Link copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-5 h-5" /> Copy link
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="mt-5 flex items-center gap-2 bg-secondary/60 border border-border rounded-xl px-3 py-2.5">
+                <Share2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <p className="text-xs sm:text-sm font-mono text-muted-foreground truncate">
+                  {shareUrl}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
