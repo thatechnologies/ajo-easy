@@ -129,9 +129,18 @@ const Landing = () => {
       });
       return;
     }
+    if (!isFormspreeConfigured) {
+      toast({
+        title: "Waitlist not configured",
+        description:
+          "Set VITE_FORMSPREE_ENDPOINT in your .env file to start collecting signups.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSubmitting(true);
     try {
-      const res = await fetch(FORMSPREE_ENDPOINT, {
+      const res = await fetch(FORMSPREE_ENDPOINT as string, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
