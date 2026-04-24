@@ -118,6 +118,34 @@ const Landing = () => {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const shareUrl =
+    typeof window !== "undefined" ? window.location.origin + "/" : "";
+  const shareMessage =
+    "I just joined the Thatech Ajo waitlist — the easiest way to run a savings circle without the wahala. Join me 👉 ";
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast({
+        title: "Link copied!",
+        description: "Share it with your group on WhatsApp, SMS, or anywhere.",
+      });
+      setTimeout(() => setCopied(false), 2200);
+    } catch {
+      toast({
+        title: "Couldn't copy",
+        description: "Long-press the link to copy it manually.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(
+    shareMessage + shareUrl
+  )}`;
 
   const isValidEmail = (v: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
