@@ -22,6 +22,9 @@ import {
   Smartphone,
   Lock,
   Zap,
+  Share2,
+  Copy,
+  Check,
 } from "lucide-react";
 
 // Formspree endpoint is read from the Vite env var `VITE_FORMSPREE_ENDPOINT`.
