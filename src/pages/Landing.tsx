@@ -357,7 +357,7 @@ const Landing = () => {
               </div>
 
               {/* Floating card */}
-              <div className="absolute -left-6 top-24 bg-card border border-border rounded-2xl p-3 shadow-elevated hidden sm:flex items-center gap-2.5 animate-fade-in">
+              <div className="absolute -left-4 sm:-left-8 bottom-24 bg-card border border-border rounded-2xl p-3 shadow-elevated hidden sm:flex items-center gap-2.5 animate-fade-in">
                 <div className="w-9 h-9 rounded-xl bg-success/15 grid place-items-center">
                   <CheckCircle2 className="w-4 h-4 text-success" />
                 </div>
