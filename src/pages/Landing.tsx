@@ -221,6 +221,9 @@ const Landing = () => {
             <a href="#testimonials" className="hover:text-foreground transition-smooth">
               Stories
             </a>
+            <a href="#share" className="hover:text-foreground transition-smooth">
+              Share
+            </a>
             <a href="#faq" className="hover:text-foreground transition-smooth">
               FAQ
             </a>
