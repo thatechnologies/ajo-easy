@@ -24,9 +24,16 @@ import {
   Zap,
 } from "lucide-react";
 
-// Replace with your real Formspree endpoint (e.g. https://formspree.io/f/abcd1234).
-// Setup: create a free form at https://formspree.io, copy the endpoint, paste below.
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/your-form-id";
+// Formspree endpoint is read from the Vite env var `VITE_FORMSPREE_ENDPOINT`.
+// Set it in a `.env` (or `.env.local`) file at the project root, e.g.:
+//   VITE_FORMSPREE_ENDPOINT=https://formspree.io/f/abcd1234
+// Restart the dev server after changing env vars. See `.env.example` for reference.
+const FORMSPREE_ENDPOINT = import.meta.env.VITE_FORMSPREE_ENDPOINT as
+  | string
+  | undefined;
+const isFormspreeConfigured =
+  !!FORMSPREE_ENDPOINT &&
+  /^https:\/\/formspree\.io\/f\/.+/.test(FORMSPREE_ENDPOINT);
 
 const features = [
   {
