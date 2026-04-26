@@ -163,6 +163,27 @@ const Landing = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [statusInput, setStatusInput] = useState("");
+  const [checkResult, setCheckResult] = useState<
+    null | { found: boolean; value: string }
+  >(null);
+
+  const handleCheckStatus = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = statusInput.trim();
+    if (!trimmed) {
+      toast({
+        title: "Enter your email or phone",
+        description: "Type the email or phone number you used to join.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const normalized = normalizeEntry(trimmed);
+    const entries = readWaitlistEntries();
+    const found = !!normalized && entries.includes(normalized);
+    setCheckResult({ found, value: trimmed });
+  };
 
   const shareUrl =
     typeof window !== "undefined" ? window.location.origin + "/" : "";
