@@ -74,7 +74,7 @@ const Profile = () => {
           <LogOut className="w-4 h-4" /> Log out
         </button>
 
-        <p className="text-center text-[10px] text-muted-foreground">Thatech Ajo v1.0 • Made with ❤️ in Nigeria</p>
+        <p className="text-center text-[10px] text-muted-foreground">Kowope v1.0 • Made with ❤️ in Nigeria</p>
       </div>
     </div>
   );
