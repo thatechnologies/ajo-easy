@@ -19,8 +19,8 @@ const Splash = () => {
             <span className="text-2xl font-extrabold">₦</span>
           </div>
           <div>
-            <p className="text-xs opacity-80 -mb-0.5">Kowope</p>
-            <p className="text-lg font-bold tracking-tight">Ajo</p>
+            <p className="text-xs opacity-80 -mb-0.5">Welcome to</p>
+            <p className="text-lg font-bold tracking-tight">Kowope</p>
           </div>
         </div>
 
