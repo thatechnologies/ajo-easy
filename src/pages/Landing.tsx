@@ -71,13 +71,12 @@ const saveWaitlistEntry = (entry: string) => {
   }
 };
 
-// Formspree endpoint is read from the Vite env var `VITE_FORMSPREE_ENDPOINT`.
-// Set it in a `.env` (or `.env.local`) file at the project root, e.g.:
-//   VITE_FORMSPREE_ENDPOINT=https://formspree.io/f/abcd1234
-// Restart the dev server after changing env vars. See `.env.example` for reference.
-const FORMSPREE_ENDPOINT = import.meta.env.VITE_FORMSPREE_ENDPOINT as
-  | string
-  | undefined;
+// Formspree endpoint. Defaults to the project's live form, but can be overridden
+// via the Vite env var `VITE_FORMSPREE_ENDPOINT` (see `.env.example`).
+const DEFAULT_FORMSPREE_ENDPOINT = "https://formspree.io/f/mdayvaoz";
+const FORMSPREE_ENDPOINT =
+  (import.meta.env.VITE_FORMSPREE_ENDPOINT as string | undefined) ||
+  DEFAULT_FORMSPREE_ENDPOINT;
 const isFormspreeConfigured =
   !!FORMSPREE_ENDPOINT &&
   /^https:\/\/formspree\.io\/f\/.+/.test(FORMSPREE_ENDPOINT);
