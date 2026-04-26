@@ -29,6 +29,7 @@ import {
   XCircle,
   Mail,
 } from "lucide-react";
+import kowopeLogo from "@/assets/kowope-logo.png";
 
 const WAITLIST_STORAGE_KEY = "kowope:waitlist-entries";
 
@@ -272,8 +273,8 @@ const Landing = () => {
       <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border/60">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-primary grid place-items-center shadow-glow">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-primary grid place-items-center shadow-glow p-1">
+              <img src={kowopeLogo} alt="Kowope logo" width={40} height={40} className="w-full h-full object-contain" />
             </div>
             <span className="font-extrabold text-lg tracking-tight">
               Kowope
@@ -828,8 +829,8 @@ const Landing = () => {
       <footer className="border-t border-border/60 py-10">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-primary grid place-items-center">
-              <Sparkles className="w-3.5 h-3.5 text-primary-foreground" />
+            <div className="w-8 h-8 rounded-lg bg-gradient-primary grid place-items-center p-0.5">
+              <img src={kowopeLogo} alt="Kowope logo" width={32} height={32} loading="lazy" className="w-full h-full object-contain" />
             </div>
             <span className="font-bold text-sm">Kowope</span>
             <span className="text-xs text-muted-foreground ml-2">

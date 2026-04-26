@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Shield, Users, TrendingUp } from "lucide-react";
+import kowopeLogo from "@/assets/kowope-logo.png";
 
 const Splash = () => {
   const navigate = useNavigate();
@@ -15,8 +16,8 @@ const Splash = () => {
       <div className="relative flex-1 flex flex-col px-6 pt-16 pb-10">
         {/* Logo */}
         <div className="flex items-center gap-2.5 animate-fade-in">
-          <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-glow">
-            <span className="text-2xl font-extrabold">₦</span>
+          <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-glow p-1.5">
+            <img src={kowopeLogo} alt="Kowope logo" width={48} height={48} className="w-full h-full object-contain" />
           </div>
           <div>
             <p className="text-xs opacity-80 -mb-0.5">Welcome to</p>
