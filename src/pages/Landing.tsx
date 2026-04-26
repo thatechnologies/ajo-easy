@@ -30,7 +30,7 @@ import {
   Mail,
 } from "lucide-react";
 
-const WAITLIST_STORAGE_KEY = "thatech-ajo:waitlist-entries";
+const WAITLIST_STORAGE_KEY = "kowope:waitlist-entries";
 
 const normalizeEntry = (raw: string) => {
   const v = raw.trim().toLowerCase();
@@ -119,7 +119,7 @@ const testimonials = [
     name: "Aisha B.",
     role: "Trader, Balogun Market",
     quote:
-      "Before Thatech Ajo, we used a notebook. Now everyone sees who paid — no more wahala.",
+      "Before Kowope, we used a notebook. Now everyone sees who paid — no more wahala.",
     initials: "AB",
   },
   {
@@ -140,16 +140,16 @@ const testimonials = [
 
 const faqs = [
   {
-    q: "Is Thatech Ajo free to use?",
+    q: "Is Kowope free to use?",
     a: "Joining the waitlist is completely free. Early users will get the core ajo features at no cost when we launch.",
   },
   {
     q: "How does the money move?",
-    a: "Members contribute via bank transfer, card, or USSD. Thatech Ajo tracks who paid and helps the admin payout the recipient on schedule.",
+    a: "Members contribute via bank transfer, card, or USSD. Kowope tracks who paid and helps the admin payout the recipient on schedule.",
   },
   {
     q: "Is my group's money safe?",
-    a: "We never hold your money. Thatech Ajo is the trust and tracking layer — funds move through trusted Nigerian payment rails.",
+    a: "We never hold your money. Kowope is the trust and tracking layer — funds move through trusted Nigerian payment rails.",
   },
   {
     q: "When will it launch?",
@@ -187,7 +187,7 @@ const Landing = () => {
   const shareUrl =
     typeof window !== "undefined" ? window.location.origin + "/" : "";
   const shareMessage =
-    "I just joined the Thatech Ajo waitlist — the easiest way to run a savings circle without the wahala. Join me 👉 ";
+    "I just joined the Kowope waitlist — the easiest way to run a savings circle without the wahala. Join me 👉 ";
 
   const handleCopyLink = async () => {
     try {
@@ -243,7 +243,7 @@ const Landing = () => {
         },
         body: JSON.stringify({
           email: email.trim(),
-          source: "Thatech Ajo landing page",
+          source: "Kowope landing page",
         }),
       });
       if (!res.ok) throw new Error("Submission failed");
@@ -252,7 +252,7 @@ const Landing = () => {
       setEmail("");
       toast({
         title: "You're on the list! 🎉",
-        description: "We'll email you the moment Thatech Ajo is ready.",
+        description: "We'll email you the moment Kowope is ready.",
       });
     } catch {
       toast({
@@ -276,7 +276,7 @@ const Landing = () => {
               <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="font-extrabold text-lg tracking-tight">
-              Thatech Ajo
+              Kowope
             </span>
           </Link>
           <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-muted-foreground">
@@ -327,7 +327,7 @@ const Landing = () => {
               without the wahala.
             </h1>
             <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-xl leading-relaxed">
-              Thatech Ajo is the simplest way for friends, family and market
+              Kowope is the simplest way for friends, family and market
               groups to save together. Track contributions, payouts, and
               reminders — all in one place.
             </p>
@@ -481,7 +481,7 @@ const Landing = () => {
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <div className="max-w-2xl">
             <p className="text-xs font-bold uppercase tracking-widest text-primary mb-3">
-              Why Thatech Ajo
+              Why Kowope
             </p>
             <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
               Everything you need to run a trusted savings circle.
@@ -684,7 +684,7 @@ const Landing = () => {
             </h2>
             <p className="mt-3 text-sm text-muted-foreground">
               Enter the email or phone number you used to confirm you're on the
-              Thatech Ajo waitlist.
+              Kowope waitlist.
             </p>
           </div>
 
@@ -831,7 +831,7 @@ const Landing = () => {
             <div className="w-7 h-7 rounded-lg bg-gradient-primary grid place-items-center">
               <Sparkles className="w-3.5 h-3.5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-sm">Thatech Ajo</span>
+            <span className="font-bold text-sm">Kowope</span>
             <span className="text-xs text-muted-foreground ml-2">
               © {new Date().getFullYear()} — Made for Nigeria 🇳🇬
             </span>

@@ -144,7 +144,7 @@ const CreateGroup = () => {
   const buildShareMessage = () => {
     if (!created) return "";
     const { data, inviteCode, inviteLink } = created;
-    return `You're invited to join *${data.name}* on Thatech Ajo 💸\n\n• Contribution: ${formatNaira(
+    return `You're invited to join *${data.name}* on Kowope 💸\n\n• Contribution: ${formatNaira(
       data.amount
     )} ${data.frequency.toLowerCase()}\n• Members: ${data.members}\n• Starts: ${format(
       data.startDate,
