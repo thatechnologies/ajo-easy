@@ -290,6 +290,9 @@ const Landing = () => {
             <a href="#share" className="hover:text-foreground transition-smooth">
               Share
             </a>
+            <a href="#status" className="hover:text-foreground transition-smooth">
+              Status
+            </a>
             <a href="#faq" className="hover:text-foreground transition-smooth">
               FAQ
             </a>
