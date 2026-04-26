@@ -560,48 +560,7 @@ const Landing = () => {
       </section>
 
       {/* Testimonials */}
-      <section
-        id="testimonials"
-        className="py-20 lg:py-28 bg-secondary/40 border-y border-border/60"
-      >
-        <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <div className="max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-widest text-primary mb-3">
-              Trusted by groups
-            </p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-              Real stories from real ajo groups.
-            </h2>
-          </div>
-
-          <div className="mt-12 grid md:grid-cols-3 gap-5">
-            {testimonials.map((t) => (
-              <figure
-                key={t.name}
-                className="bg-card border border-border rounded-3xl p-6 shadow-soft flex flex-col"
-              >
-                <div className="flex gap-0.5 text-warning mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-current" />
-                  ))}
-                </div>
-                <blockquote className="text-sm leading-relaxed text-foreground/90 flex-1">
-                  "{t.quote}"
-                </blockquote>
-                <figcaption className="mt-5 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-primary text-primary-foreground text-sm font-bold grid place-items-center">
-                    {t.initials}
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
-                  </div>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
+      
 
       {/* Share waitlist */}
       <section id="share" className="py-20 lg:py-24">
