@@ -25,7 +25,51 @@ import {
   Share2,
   Copy,
   Check,
+  Search,
+  XCircle,
+  Mail,
 } from "lucide-react";
+
+const WAITLIST_STORAGE_KEY = "thatech-ajo:waitlist-entries";
+
+const normalizeEntry = (raw: string) => {
+  const v = raw.trim().toLowerCase();
+  if (v.includes("@")) return v;
+  // treat as phone: keep digits only, drop leading 0/country code variants
+  const digits = v.replace(/\D/g, "");
+  // normalize Nigerian numbers: 0XXXXXXXXXX -> 234XXXXXXXXXX
+  if (digits.startsWith("0") && digits.length === 11) return "234" + digits.slice(1);
+  return digits;
+};
+
+const readWaitlistEntries = (): string[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveWaitlistEntry = (entry: string) => {
+  if (typeof window === "undefined") return;
+  const normalized = normalizeEntry(entry);
+  if (!normalized) return;
+  const existing = readWaitlistEntries();
+  if (!existing.includes(normalized)) {
+    try {
+      window.localStorage.setItem(
+        WAITLIST_STORAGE_KEY,
+        JSON.stringify([...existing, normalized])
+      );
+    } catch {
+      // ignore quota errors
+    }
+  }
+};
 
 // Formspree endpoint is read from the Vite env var `VITE_FORMSPREE_ENDPOINT`.
 // Set it in a `.env` (or `.env.local`) file at the project root, e.g.:
@@ -119,6 +163,27 @@ const Landing = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [statusInput, setStatusInput] = useState("");
+  const [checkResult, setCheckResult] = useState<
+    null | { found: boolean; value: string }
+  >(null);
+
+  const handleCheckStatus = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = statusInput.trim();
+    if (!trimmed) {
+      toast({
+        title: "Enter your email or phone",
+        description: "Type the email or phone number you used to join.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const normalized = normalizeEntry(trimmed);
+    const entries = readWaitlistEntries();
+    const found = !!normalized && entries.includes(normalized);
+    setCheckResult({ found, value: trimmed });
+  };
 
   const shareUrl =
     typeof window !== "undefined" ? window.location.origin + "/" : "";
@@ -183,6 +248,7 @@ const Landing = () => {
         }),
       });
       if (!res.ok) throw new Error("Submission failed");
+      saveWaitlistEntry(email);
       setSubmitted(true);
       setEmail("");
       toast({
@@ -223,6 +289,9 @@ const Landing = () => {
             </a>
             <a href="#share" className="hover:text-foreground transition-smooth">
               Share
+            </a>
+            <a href="#status" className="hover:text-foreground transition-smooth">
+              Status
             </a>
             <a href="#faq" className="hover:text-foreground transition-smooth">
               FAQ
@@ -600,6 +669,104 @@ const Landing = () => {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Check waitlist status */}
+      <section id="status" className="py-16 lg:py-20 bg-secondary/40 border-y border-border/60">
+        <div className="max-w-2xl mx-auto px-5 sm:px-8">
+          <div className="text-center max-w-xl mx-auto">
+            <div className="inline-flex items-center gap-2 bg-card border border-border rounded-full px-3 py-1.5 text-xs font-bold mb-4">
+              <Search className="w-3.5 h-3.5 text-primary" />
+              Check my invite status
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              Already joined? Check your spot.
+            </h2>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Enter the email or phone number you used to confirm you're on the
+              Thatech Ajo waitlist.
+            </p>
+          </div>
+
+          <form
+            onSubmit={handleCheckStatus}
+            className="mt-7 flex flex-col sm:flex-row gap-3"
+          >
+            <input
+              type="text"
+              inputMode="email"
+              autoComplete="email"
+              value={statusInput}
+              onChange={(e) => {
+                setStatusInput(e.target.value);
+                setCheckResult(null);
+              }}
+              placeholder="you@email.com or 080..."
+              className="flex-1 bg-card border-2 border-border rounded-2xl px-4 py-3.5 outline-none focus:border-primary transition-smooth font-semibold shadow-soft placeholder:text-muted-foreground/60"
+              aria-label="Email or phone number"
+            />
+            <Button
+              type="submit"
+              size="lg"
+              className="h-auto py-3.5 px-6 font-bold rounded-2xl shadow-soft bg-foreground text-background hover:opacity-90"
+            >
+              <Search className="w-4 h-4 mr-1.5" /> Check status
+            </Button>
+          </form>
+
+          {checkResult && (
+            <div
+              role="status"
+              aria-live="polite"
+              className={cn(
+                "mt-5 rounded-2xl border-2 p-5 shadow-soft animate-fade-in",
+                checkResult.found
+                  ? "bg-success/10 border-success/40"
+                  : "bg-card border-border"
+              )}
+            >
+              {checkResult.found ? (
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-success/20 grid place-items-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-success" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-success">You're on the list 🎉</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      We have <span className="font-semibold text-foreground">{checkResult.value}</span> saved.
+                      We'll email you the moment a slot opens for your group.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-muted grid place-items-center shrink-0">
+                    <XCircle className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold">We couldn't find you yet.</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      No signup found for{" "}
+                      <span className="font-semibold text-foreground">{checkResult.value}</span> on this device.
+                      Join the waitlist below — it only takes a few seconds.
+                    </p>
+                    <a
+                      href="#waitlist"
+                      className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
+                    >
+                      <Mail className="w-4 h-4" /> Join the waitlist
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            Status is checked on this device. If you signed up from another
+            phone or browser, check there or just rejoin — we'll dedupe you.
+          </p>
         </div>
       </section>
 
