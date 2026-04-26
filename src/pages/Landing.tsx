@@ -25,7 +25,51 @@ import {
   Share2,
   Copy,
   Check,
+  Search,
+  XCircle,
+  Mail,
 } from "lucide-react";
+
+const WAITLIST_STORAGE_KEY = "thatech-ajo:waitlist-entries";
+
+const normalizeEntry = (raw: string) => {
+  const v = raw.trim().toLowerCase();
+  if (v.includes("@")) return v;
+  // treat as phone: keep digits only, drop leading 0/country code variants
+  const digits = v.replace(/\D/g, "");
+  // normalize Nigerian numbers: 0XXXXXXXXXX -> 234XXXXXXXXXX
+  if (digits.startsWith("0") && digits.length === 11) return "234" + digits.slice(1);
+  return digits;
+};
+
+const readWaitlistEntries = (): string[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveWaitlistEntry = (entry: string) => {
+  if (typeof window === "undefined") return;
+  const normalized = normalizeEntry(entry);
+  if (!normalized) return;
+  const existing = readWaitlistEntries();
+  if (!existing.includes(normalized)) {
+    try {
+      window.localStorage.setItem(
+        WAITLIST_STORAGE_KEY,
+        JSON.stringify([...existing, normalized])
+      );
+    } catch {
+      // ignore quota errors
+    }
+  }
+};
 
 // Formspree endpoint is read from the Vite env var `VITE_FORMSPREE_ENDPOINT`.
 // Set it in a `.env` (or `.env.local`) file at the project root, e.g.:
