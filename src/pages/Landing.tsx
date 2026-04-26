@@ -227,6 +227,7 @@ const Landing = () => {
         }),
       });
       if (!res.ok) throw new Error("Submission failed");
+      saveWaitlistEntry(email);
       setSubmitted(true);
       setEmail("");
       toast({
