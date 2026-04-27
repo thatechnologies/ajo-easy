@@ -1,52 +1,184 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
-import { getGroupById } from "@/lib/ajo-data";
+import { getGroupById, mockGroups } from "@/lib/ajo-data";
 import { Money, formatNaira } from "@/components/Money";
-import { CheckCircle2, CreditCard, Smartphone, Building2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, Copy, Check, Upload, Image as ImageIcon, X, Building2, Hash, User as UserIcon, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
+import { z } from "zod";
 
-type Method = "bank" | "card" | "ussd";
+interface DbGroup {
+  id: string;
+  name: string;
+  amount: number;
+  current_cycle: number;
+  total_members: number;
+  bank_name: string | null;
+  bank_account_number: string | null;
+  bank_account_name: string | null;
+}
+
+const referenceSchema = z.string().trim().min(4, "Reference too short").max(60, "Reference too long");
 
 const Pay = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const group = getGroupById(id || "");
-  const [method, setMethod] = useState<Method>("bank");
-  const [state, setState] = useState<"select" | "loading" | "done">("select");
+  const { user } = useAuth();
+
+  const [group, setGroup] = useState<DbGroup | null>(null);
+  const [loadingGroup, setLoadingGroup] = useState(true);
+  const [reference, setReference] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [state, setState] = useState<"form" | "submitting" | "done">("form");
+  const [copied, setCopied] = useState<string | null>(null);
+
+  // Try DB first; fall back to mock for demo groups
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      const { data } = await supabase
+        .from("groups")
+        .select("id,name,amount,current_cycle,total_members,bank_name,bank_account_number,bank_account_name")
+        .eq("id", id)
+        .maybeSingle();
+      if (data) {
+        setGroup(data as DbGroup);
+      } else {
+        const mock = getGroupById(id);
+        if (mock) {
+          setGroup({
+            id: mock.id,
+            name: mock.name,
+            amount: mock.amount,
+            current_cycle: mock.currentCycle,
+            total_members: mock.totalMembers,
+            bank_name: "GTBank",
+            bank_account_number: "0123456789",
+            bank_account_name: `${mock.name} Pool`,
+          });
+        }
+      }
+      setLoadingGroup(false);
+    })();
+  }, [id]);
+
+  const handleCopy = async (value: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(key);
+      toast({ title: "Copied!", description: value });
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      toast({ title: "Couldn't copy", variant: "destructive" });
+    }
+  };
+
+  const handleFile = (f: File | null) => {
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Max 5MB", variant: "destructive" });
+      return;
+    }
+    if (!f.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Upload an image (JPG/PNG)", variant: "destructive" });
+      return;
+    }
+    setFile(f);
+    const reader = new FileReader();
+    reader.onload = (e) => setFilePreview(e.target?.result as string);
+    reader.readAsDataURL(f);
+  };
+
+  const handleSubmit = async () => {
+    if (!group || !user) return;
+    const refCheck = referenceSchema.safeParse(reference);
+    if (!refCheck.success) {
+      toast({ title: "Enter transaction reference", description: refCheck.error.issues[0].message, variant: "destructive" });
+      return;
+    }
+    if (!file) {
+      toast({ title: "Upload your receipt", description: "Screenshot of the transfer is required", variant: "destructive" });
+      return;
+    }
+
+    setState("submitting");
+    try {
+      // Demo (mock) groups: skip DB, just simulate
+      const isMock = mockGroups.some((g) => g.id === group.id);
+      if (isMock) {
+        await new Promise((r) => setTimeout(r, 1200));
+        setState("done");
+        return;
+      }
+
+      // Upload receipt to private storage
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${group.id}/${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("receipts").upload(path, file, {
+        contentType: file.type,
+      });
+      if (upErr) throw upErr;
+
+      // Insert contribution
+      const { error: insErr } = await supabase.from("contributions").insert({
+        group_id: group.id,
+        member_id: user.id,
+        cycle_number: group.current_cycle,
+        amount: group.amount,
+        transaction_reference: refCheck.data,
+        receipt_url: path,
+        status: "pending",
+      });
+      if (insErr) throw insErr;
+
+      setState("done");
+    } catch (err: any) {
+      toast({ title: "Submission failed", description: err.message ?? "Try again", variant: "destructive" });
+      setState("form");
+    }
+  };
+
+  if (loadingGroup) {
+    return (
+      <div className="phone-shell flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!group) return <div className="phone-shell p-8">Group not found</div>;
-
-  const handlePay = () => {
-    setState("loading");
-    setTimeout(() => setState("done"), 1500);
-  };
 
   if (state === "done") {
     return (
       <div className="phone-shell flex flex-col">
         <div className="screen-pad flex-1 flex flex-col items-center justify-center text-center">
-          <div className="w-28 h-28 rounded-full bg-success/15 flex items-center justify-center mb-6 animate-scale-in">
-            <CheckCircle2 className="w-14 h-14 text-success" strokeWidth={2} />
+          <div className="w-28 h-28 rounded-full bg-warning/15 flex items-center justify-center mb-6 animate-scale-in">
+            <Clock className="w-14 h-14 text-warning" strokeWidth={2} />
           </div>
-          <h2 className="text-3xl font-extrabold mb-2">Payment successful!</h2>
-          <p className="text-muted-foreground mb-8 max-w-xs">Your contribution has been recorded.</p>
+          <h2 className="text-3xl font-extrabold mb-2">Receipt submitted!</h2>
+          <p className="text-muted-foreground mb-8 max-w-xs">
+            Your group admin will review and confirm your contribution shortly.
+          </p>
 
           <div className="w-full rounded-3xl bg-gradient-card border border-border p-5 shadow-card space-y-3 mb-8">
             <div className="text-center pb-3 border-b border-border">
-              <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">Amount paid</p>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-1">Amount sent</p>
               <Money amount={group.amount} size="lg" className="text-primary" />
             </div>
             {[
               { k: "Group", v: group.name },
-              { k: "Cycle", v: `${group.currentCycle} of ${group.totalMembers}` },
-              { k: "Reference", v: "AJO-PAY-" + Math.random().toString(36).slice(2, 8).toUpperCase() },
-              { k: "Date", v: "23 Apr 2026, 10:24 AM" },
+              { k: "Cycle", v: `${group.current_cycle} of ${group.total_members}` },
+              { k: "Reference", v: reference },
+              { k: "Status", v: "Pending review" },
             ].map((r) => (
-              <div key={r.k} className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{r.k}</span>
-                <span className="font-bold">{r.v}</span>
+              <div key={r.k} className="flex justify-between text-sm gap-3">
+                <span className="text-muted-foreground flex-shrink-0">{r.k}</span>
+                <span className="font-bold text-right truncate">{r.v}</span>
               </div>
             ))}
           </div>
@@ -64,72 +196,131 @@ const Pay = () => {
     );
   }
 
+  const bankRows = [
+    { icon: Building2, label: "Bank", value: group.bank_name ?? "—", key: "bank" },
+    { icon: Hash, label: "Account number", value: group.bank_account_number ?? "—", key: "acct", mono: true },
+    { icon: UserIcon, label: "Account name", value: group.bank_account_name ?? "—", key: "name" },
+  ];
+
   return (
     <div className="phone-shell flex flex-col">
       <PageHeader title="Make payment" subtitle={group.name} />
-      <div className="screen-pad flex-1 flex flex-col">
+      <div className="screen-pad flex-1 flex flex-col pb-6">
+        {/* Amount banner */}
         <div className="bg-gradient-hero text-primary-foreground rounded-3xl p-5 shadow-elevated mb-6 relative overflow-hidden">
           <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
-          <p className="text-xs uppercase tracking-widest opacity-80 font-semibold mb-2">You're paying</p>
+          <p className="text-xs uppercase tracking-widest opacity-80 font-semibold mb-2">Transfer this amount</p>
           <Money amount={group.amount} size="xl" className="block" />
-          <p className="text-xs opacity-80 mt-2">Cycle {group.currentCycle} contribution • {group.frequency}</p>
+          <p className="text-xs opacity-80 mt-2">Cycle {group.current_cycle} contribution</p>
         </div>
 
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Payment method</p>
-        <div className="space-y-2.5 mb-6">
-          {([
-            { k: "bank", l: "Bank Transfer", d: "Pay from any Nigerian bank", i: Building2 },
-            { k: "card", l: "Debit Card", d: "Verve, Visa or Mastercard", i: CreditCard },
-            { k: "ussd", l: "USSD", d: "Dial *894# from your phone", i: Smartphone },
-          ] as const).map(({ k, l, d, i: Icon }) => (
-            <button
-              key={k}
-              onClick={() => setMethod(k)}
-              className={cn(
-                "w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-smooth text-left",
-                method === k ? "border-primary bg-secondary shadow-soft" : "border-border bg-card"
-              )}
-            >
-              <div className={cn(
-                "w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0",
-                method === k ? "bg-gradient-primary" : "bg-muted"
-              )}>
-                <Icon className={cn("w-5 h-5", method === k ? "text-primary-foreground" : "text-muted-foreground")} />
+        {/* Step 1: Bank details */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">1</div>
+            <p className="text-sm font-bold">Send to group account</p>
+          </div>
+          <div className="rounded-2xl bg-card border-2 border-border shadow-soft divide-y divide-border">
+            {bankRows.map(({ icon: Icon, label, value, key, mono }) => (
+              <div key={key} className="flex items-center gap-3 p-3.5">
+                <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-semibold">{label}</p>
+                  <p className={cn("font-bold text-sm truncate", mono && "tabular-nums tracking-wide")}>{value}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(value, key)}
+                  className="p-2 rounded-lg hover:bg-secondary transition-smooth"
+                  aria-label={`Copy ${label}`}
+                >
+                  {copied === key ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                </button>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm">{l}</p>
-                <p className="text-[11px] text-muted-foreground">{d}</p>
-              </div>
-              <div className={cn(
-                "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0",
-                method === k ? "border-primary bg-primary" : "border-border"
-              )}>
-                {method === k && <div className="w-2 h-2 rounded-full bg-primary-foreground" />}
-              </div>
-            </button>
-          ))}
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-2 px-1">
+            💡 Use your bank app or USSD to transfer exactly {formatNaira(group.amount)}
+          </p>
         </div>
 
-        <div className="rounded-2xl bg-secondary/60 border border-secondary p-3.5 mb-4 flex justify-between text-sm">
-          <span className="text-muted-foreground">Service fee</span>
-          <span className="font-bold text-success">FREE</span>
+        {/* Step 2: Reference */}
+        <div className="mb-5">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">2</div>
+            <p className="text-sm font-bold">Enter transaction reference</p>
+          </div>
+          <input
+            type="text"
+            value={reference}
+            onChange={(e) => setReference(e.target.value)}
+            placeholder="e.g. TRF/12345678"
+            maxLength={60}
+            className="w-full bg-card border-2 border-border rounded-2xl px-4 py-3.5 outline-none focus:border-primary transition-smooth font-semibold shadow-soft tabular-nums placeholder:text-muted-foreground/60 placeholder:font-normal"
+          />
+          <p className="text-[11px] text-muted-foreground mt-2 px-1">
+            From your bank's transfer confirmation SMS or app
+          </p>
+        </div>
+
+        {/* Step 3: Receipt upload */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">3</div>
+            <p className="text-sm font-bold">Upload receipt screenshot</p>
+          </div>
+          {filePreview ? (
+            <div className="relative rounded-2xl overflow-hidden border-2 border-border shadow-soft bg-card">
+              <img src={filePreview} alt="Receipt preview" className="w-full max-h-64 object-contain bg-muted" />
+              <button
+                type="button"
+                onClick={() => { setFile(null); setFilePreview(null); }}
+                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-foreground/80 text-background flex items-center justify-center"
+                aria-label="Remove receipt"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <div className="px-3 py-2 text-xs text-muted-foreground border-t border-border bg-card">
+                <ImageIcon className="w-3 h-3 inline mr-1" />
+                {file?.name} ({((file?.size ?? 0) / 1024).toFixed(0)} KB)
+              </div>
+            </div>
+          ) : (
+            <label className="block cursor-pointer">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+              />
+              <div className="rounded-2xl border-2 border-dashed border-border bg-card p-8 text-center shadow-soft hover:border-primary transition-smooth">
+                <div className="w-12 h-12 rounded-xl bg-secondary mx-auto mb-3 flex items-center justify-center">
+                  <Upload className="w-6 h-6 text-primary" />
+                </div>
+                <p className="font-bold text-sm">Tap to upload</p>
+                <p className="text-[11px] text-muted-foreground mt-1">JPG or PNG, max 5MB</p>
+              </div>
+            </label>
+          )}
         </div>
 
         <div className="mt-auto">
           <Button
             size="lg"
-            disabled={state === "loading"}
-            onClick={handlePay}
+            disabled={state === "submitting"}
+            onClick={handleSubmit}
             className="w-full h-14 bg-gradient-primary font-bold text-base rounded-2xl shadow-glow"
           >
-            {state === "loading" ? (
-              <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processing...</>
+            {state === "submitting" ? (
+              <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Submitting...</>
             ) : (
-              `Pay ${formatNaira(group.amount)}`
+              "Submit for confirmation"
             )}
           </Button>
           <p className="text-[11px] text-muted-foreground text-center mt-3">
-            🔒 Payments secured & encrypted end-to-end
+            🔒 Your receipt is private — only group admins can view it
           </p>
         </div>
       </div>
