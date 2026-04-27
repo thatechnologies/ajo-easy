@@ -52,14 +52,23 @@ const Payments = () => {
     }
     const { data, error } = await supabase
       .from("contributions")
-      .select("*, groups(name), profiles!contributions_member_id_fkey(full_name, phone)")
+      .select("*, groups(name)")
       .in("group_id", groupIds)
       .eq("status", tab)
       .order("submitted_at", { ascending: false });
     if (error) {
       toast({ title: "Couldn't load payments", description: error.message, variant: "destructive" });
+      setItems([]);
+      setLoading(false);
+      return;
     }
-    setItems((data ?? []) as any);
+    // Fetch profiles for member_ids
+    const memberIds = Array.from(new Set((data ?? []).map((d: any) => d.member_id)));
+    const { data: profs } = memberIds.length
+      ? await supabase.from("profiles").select("id, full_name, phone").in("id", memberIds)
+      : { data: [] as any[] };
+    const profMap = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    setItems((data ?? []).map((c: any) => ({ ...c, profiles: profMap.get(c.member_id) ?? null })) as any);
     setLoading(false);
   }, [user, tab]);
 
