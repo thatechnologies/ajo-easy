@@ -14,16 +14,224 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contributions: {
+        Row: {
+          amount: number
+          cycle_number: number
+          group_id: string
+          id: string
+          member_id: string
+          notes: string | null
+          receipt_url: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["contribution_status"]
+          submitted_at: string
+          transaction_reference: string
+        }
+        Insert: {
+          amount: number
+          cycle_number: number
+          group_id: string
+          id?: string
+          member_id: string
+          notes?: string | null
+          receipt_url?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["contribution_status"]
+          submitted_at?: string
+          transaction_reference: string
+        }
+        Update: {
+          amount?: number
+          cycle_number?: number
+          group_id?: string
+          id?: string
+          member_id?: string
+          notes?: string | null
+          receipt_url?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["contribution_status"]
+          submitted_at?: string
+          transaction_reference?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contributions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_members: {
+        Row: {
+          group_id: string
+          id: string
+          is_admin: boolean
+          joined_at: string
+          payout_position: number
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          is_admin?: boolean
+          joined_at?: string
+          payout_position: number
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          is_admin?: boolean
+          joined_at?: string
+          payout_position?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          amount: number
+          bank_account_name: string | null
+          bank_account_number: string | null
+          bank_name: string | null
+          created_at: string
+          created_by: string
+          current_cycle: number
+          frequency: Database["public"]["Enums"]["group_frequency"]
+          id: string
+          invite_code: string
+          name: string
+          start_date: string
+          total_members: number
+        }
+        Insert: {
+          amount: number
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          created_at?: string
+          created_by: string
+          current_cycle?: number
+          frequency: Database["public"]["Enums"]["group_frequency"]
+          id?: string
+          invite_code: string
+          name: string
+          start_date?: string
+          total_members: number
+        }
+        Update: {
+          amount?: number
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
+          created_at?: string
+          created_by?: string
+          current_cycle?: number
+          frequency?: Database["public"]["Enums"]["group_frequency"]
+          id?: string
+          invite_code?: string
+          name?: string
+          start_date?: string
+          total_members?: number
+        }
+        Relationships: []
+      }
+      payouts: {
+        Row: {
+          amount: number
+          cycle_number: number
+          group_id: string
+          id: string
+          notes: string | null
+          paid_at: string
+          recipient_id: string
+          recorded_by: string
+        }
+        Insert: {
+          amount: number
+          cycle_number: number
+          group_id: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          recipient_id: string
+          recorded_by: string
+        }
+        Update: {
+          amount?: number
+          cycle_number?: number
+          group_id?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          recipient_id?: string
+          recorded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_group_admin: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_group_member: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      contribution_status: "pending" | "confirmed" | "rejected"
+      group_frequency: "Weekly" | "Monthly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +358,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      contribution_status: ["pending", "confirmed", "rejected"],
+      group_frequency: ["Weekly", "Monthly"],
+    },
   },
 } as const
