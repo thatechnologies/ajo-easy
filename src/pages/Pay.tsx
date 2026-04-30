@@ -2,14 +2,36 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
+<<<<<<< HEAD
 import { apiGetGroup, apiSubmitContribution, type Group } from "@/lib/ajo-data";
 import { Money, formatNaira } from "@/components/Money";
 import { CheckCircle2, Loader2, Copy, Check, Upload, Image as ImageIcon, X, Building2, Hash, User as UserIcon, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+=======
+import { getGroupById, mockGroups } from "@/lib/ajo-data";
+import { Money, formatNaira } from "@/components/Money";
+import { CheckCircle2, Loader2, Copy, Check, Upload, Image as ImageIcon, X, Building2, Hash, User as UserIcon, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { z } from "zod";
 
+<<<<<<< HEAD
+=======
+interface DbGroup {
+  id: string;
+  name: string;
+  amount: number;
+  current_cycle: number;
+  total_members: number;
+  bank_name: string | null;
+  bank_account_number: string | null;
+  bank_account_name: string | null;
+}
+
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 const referenceSchema = z.string().trim().min(4, "Reference too short").max(60, "Reference too long");
 
 const Pay = () => {
@@ -17,7 +39,11 @@ const Pay = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+<<<<<<< HEAD
   const [group, setGroup] = useState<Group | null>(null);
+=======
+  const [group, setGroup] = useState<DbGroup | null>(null);
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
   const [loadingGroup, setLoadingGroup] = useState(true);
   const [reference, setReference] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -25,6 +51,7 @@ const Pay = () => {
   const [state, setState] = useState<"form" | "submitting" | "done">("form");
   const [copied, setCopied] = useState<string | null>(null);
 
+<<<<<<< HEAD
   useEffect(() => {
     if (!id) return;
     setLoadingGroup(true);
@@ -35,6 +62,36 @@ const Pay = () => {
         toast({ title: "Failed to load group", description: message, variant: "destructive" });
       })
       .finally(() => setLoadingGroup(false));
+=======
+  // Try DB first; fall back to mock for demo groups
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      const { data } = await supabase
+        .from("groups")
+        .select("id,name,amount,current_cycle,total_members,bank_name,bank_account_number,bank_account_name")
+        .eq("id", id)
+        .maybeSingle();
+      if (data) {
+        setGroup(data as DbGroup);
+      } else {
+        const mock = getGroupById(id);
+        if (mock) {
+          setGroup({
+            id: mock.id,
+            name: mock.name,
+            amount: mock.amount,
+            current_cycle: mock.currentCycle,
+            total_members: mock.totalMembers,
+            bank_name: "GTBank",
+            bank_account_number: "0123456789",
+            bank_account_name: `${mock.name} Pool`,
+          });
+        }
+      }
+      setLoadingGroup(false);
+    })();
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
   }, [id]);
 
   const handleCopy = async (value: string, key: string) => {
@@ -78,6 +135,7 @@ const Pay = () => {
 
     setState("submitting");
     try {
+<<<<<<< HEAD
       await apiSubmitContribution({
         groupId: group.id,
         transactionReference: refCheck.data,
@@ -87,6 +145,39 @@ const Pay = () => {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Try again";
       toast({ title: "Submission failed", description: message, variant: "destructive" });
+=======
+      // Demo (mock) groups: skip DB, just simulate
+      const isMock = mockGroups.some((g) => g.id === group.id);
+      if (isMock) {
+        await new Promise((r) => setTimeout(r, 1200));
+        setState("done");
+        return;
+      }
+
+      // Upload receipt to private storage
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${group.id}/${user.id}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("receipts").upload(path, file, {
+        contentType: file.type,
+      });
+      if (upErr) throw upErr;
+
+      // Insert contribution
+      const { error: insErr } = await supabase.from("contributions").insert({
+        group_id: group.id,
+        member_id: user.id,
+        cycle_number: group.current_cycle,
+        amount: group.amount,
+        transaction_reference: refCheck.data,
+        receipt_url: path,
+        status: "pending",
+      });
+      if (insErr) throw insErr;
+
+      setState("done");
+    } catch (err: any) {
+      toast({ title: "Submission failed", description: err.message ?? "Try again", variant: "destructive" });
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
       setState("form");
     }
   };
@@ -120,7 +211,11 @@ const Pay = () => {
             </div>
             {[
               { k: "Group", v: group.name },
+<<<<<<< HEAD
               { k: "Cycle", v: `${group.currentCycle} of ${group.totalMembers}` },
+=======
+              { k: "Cycle", v: `${group.current_cycle} of ${group.total_members}` },
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
               { k: "Reference", v: reference },
               { k: "Status", v: "Pending review" },
             ].map((r) => (
@@ -145,9 +240,15 @@ const Pay = () => {
   }
 
   const bankRows = [
+<<<<<<< HEAD
     { icon: Building2, label: "Bank", value: group.bankName ?? "—", key: "bank" },
     { icon: Hash, label: "Account number", value: group.bankAccountNumber ?? "—", key: "acct", mono: true },
     { icon: UserIcon, label: "Account name", value: group.bankAccountName ?? "—", key: "name" },
+=======
+    { icon: Building2, label: "Bank", value: group.bank_name ?? "—", key: "bank" },
+    { icon: Hash, label: "Account number", value: group.bank_account_number ?? "—", key: "acct", mono: true },
+    { icon: UserIcon, label: "Account name", value: group.bank_account_name ?? "—", key: "name" },
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
   ];
 
   return (
@@ -159,7 +260,11 @@ const Pay = () => {
           <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
           <p className="text-xs uppercase tracking-widest opacity-80 font-semibold mb-2">Transfer this amount</p>
           <Money amount={group.amount} size="xl" className="block" />
+<<<<<<< HEAD
           <p className="text-xs opacity-80 mt-2">Cycle {group.currentCycle} contribution</p>
+=======
+          <p className="text-xs opacity-80 mt-2">Cycle {group.current_cycle} contribution</p>
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
         </div>
 
         {/* Step 1: Bank details */}

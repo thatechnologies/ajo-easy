@@ -5,7 +5,10 @@ export interface Member {
   name: string;
   phone: string;
   paid: boolean;
+<<<<<<< HEAD
   paymentStatus?: "none" | "pending" | "confirmed" | "rejected";
+=======
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
   receivedPayout: boolean;
   payoutPosition: number;
   isAdmin?: boolean;
@@ -20,12 +23,16 @@ export interface Group {
   currentCycle: number;
   nextPayoutDate: string;
   nextPayoutMember: string;
+<<<<<<< HEAD
   nextPayoutMemberId?: string | null;
+=======
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
   members: Member[];
   inviteCode: string;
   totalContributed: number;
   myContribution: number;
   paidThisCycle: number;
+<<<<<<< HEAD
   confirmedThisCycle?: number;
   myPaidThisCycle?: boolean;
   startDate: string;
@@ -34,6 +41,9 @@ export interface Group {
   bankAccountName?: string | null;
   isAdmin?: boolean;
   payoutPosition?: number;
+=======
+  startDate: string;
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 }
 
 export const mockGroups: Group[] = [
@@ -144,6 +154,7 @@ export const mockNotifications: Notification[] = [
   { id: "n4", title: "Missed payment alert", message: "Ibrahim Y. has not paid this week", time: "Yesterday", type: "missed", unread: false },
   { id: "n5", title: "Cycle complete", message: "Family Savings Circle Cycle 1 has ended", time: "3d ago", type: "success", unread: false },
 ];
+<<<<<<< HEAD
 
 export type LocalContributionStatus = "pending" | "confirmed" | "rejected";
 
@@ -554,3 +565,5 @@ export const apiMarkNotificationRead = async (id: string) => {
 export const apiMarkAllNotificationsRead = async () => {
   return apiJson<{ ok: true }>(`/notifications/read-all`, { method: "POST" });
 };
+=======
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc

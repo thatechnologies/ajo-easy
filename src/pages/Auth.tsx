@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+<<<<<<< HEAD
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { Eye, EyeOff, Loader2, Lock, Mail, Phone, User as UserIcon } from "lucide-react";
 import type { SVGProps } from "react";
 import kowopeLogo from "@/assets/kowope-logo.png";
+=======
+import { useNavigate } from "react-router-dom";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/PageHeader";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Loader2, Mail, Lock, User as UserIcon, Phone } from "lucide-react";
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 
 const signUpSchema = z.object({
   fullName: z.string().trim().min(2, "Name too short").max(60),
@@ -22,6 +33,7 @@ const signInSchema = z.object({
 
 const Auth = () => {
   const navigate = useNavigate();
+<<<<<<< HEAD
   const [searchParams] = useSearchParams();
   const { user, loading, signIn, signUp } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signup");
@@ -35,6 +47,14 @@ const Auth = () => {
   }, [searchParams]);
 
   useEffect(() => {
+=======
+  const { user, loading } = useAuth();
+  const [mode, setMode] = useState<"signin" | "signup">("signup");
+  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({ fullName: "", phone: "", email: "", password: "" });
+
+  useEffect(() => {
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
     if (!loading && user) navigate("/dashboard", { replace: true });
   }, [user, loading, navigate]);
 
@@ -48,12 +68,30 @@ const Auth = () => {
           toast({ title: "Check your details", description: parsed.error.issues[0].message, variant: "destructive" });
           return;
         }
+<<<<<<< HEAD
         await signUp({
           email: parsed.data.email,
           password: parsed.data.password,
           fullName: parsed.data.fullName,
           phone: parsed.data.phone,
         });
+=======
+        const { error } = await supabase.auth.signUp({
+          email: parsed.data.email,
+          password: parsed.data.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/dashboard`,
+            data: { full_name: parsed.data.fullName, phone: parsed.data.phone },
+          },
+        });
+        if (error) {
+          if (error.message.toLowerCase().includes("already")) {
+            toast({ title: "Account exists", description: "Try signing in instead.", variant: "destructive" });
+            setMode("signin");
+          } else throw error;
+          return;
+        }
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
         toast({ title: "Welcome to Kowope!", description: "Your account is ready." });
         navigate("/dashboard", { replace: true });
       } else {
@@ -62,18 +100,31 @@ const Auth = () => {
           toast({ title: "Check your details", description: parsed.error.issues[0].message, variant: "destructive" });
           return;
         }
+<<<<<<< HEAD
         await signIn({ email: parsed.data.email, password: parsed.data.password });
         navigate("/dashboard", { replace: true });
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Try again";
       toast({ title: "Something went wrong", description: message, variant: "destructive" });
+=======
+        const { error } = await supabase.auth.signInWithPassword({
+          email: parsed.data.email,
+          password: parsed.data.password,
+        });
+        if (error) throw error;
+        navigate("/dashboard", { replace: true });
+      }
+    } catch (err: any) {
+      toast({ title: "Something went wrong", description: err.message ?? "Try again", variant: "destructive" });
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
     } finally {
       setBusy(false);
     }
   };
 
   return (
+<<<<<<< HEAD
     <div className="phone-shell flex flex-col bg-background">
       <div className="bg-gradient-hero text-primary-foreground px-6 pt-12 pb-12 rounded-b-[2rem] relative overflow-hidden">
         <div className="absolute -top-14 -right-12 w-56 h-56 rounded-full bg-white/10 blur-3xl" />
@@ -201,11 +252,56 @@ const Auth = () => {
         <p className="text-[11px] text-muted-foreground text-center mt-4 px-2">
           By continuing, you agree to our Terms and Privacy Policy.
         </p>
+=======
+    <div className="phone-shell flex flex-col">
+      <PageHeader title={mode === "signup" ? "Create account" : "Welcome back"} subtitle="Kowope Ajo" />
+      <form onSubmit={handleSubmit} className="screen-pad flex-1 flex flex-col">
+        <div className="flex gap-2 p-1 bg-secondary rounded-2xl mb-6">
+          {(["signup", "signin"] as const).map((m) => (
+            <button
+              type="button"
+              key={m}
+              onClick={() => setMode(m)}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-smooth ${
+                mode === m ? "bg-card shadow-soft" : "text-muted-foreground"
+              }`}
+            >
+              {m === "signup" ? "Sign up" : "Sign in"}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-4">
+          {mode === "signup" && (
+            <>
+              <Field icon={UserIcon} placeholder="Full name" value={form.fullName} onChange={(v) => setForm({ ...form, fullName: v })} />
+              <Field icon={Phone} placeholder="Phone (e.g. +234 803...)" type="tel" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
+            </>
+          )}
+          <Field icon={Mail} placeholder="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
+          <Field icon={Lock} placeholder="Password" type="password" value={form.password} onChange={(v) => setForm({ ...form, password: v })} />
+        </div>
+
+        <div className="mt-auto pt-6">
+          <Button
+            type="submit"
+            size="lg"
+            disabled={busy}
+            className="w-full h-14 bg-gradient-primary font-bold text-base rounded-2xl shadow-glow"
+          >
+            {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : mode === "signup" ? "Create account" : "Sign in"}
+          </Button>
+          <p className="text-[11px] text-muted-foreground text-center mt-3">
+            🔒 Your data is encrypted and secure
+          </p>
+        </div>
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
       </form>
     </div>
   );
 };
 
+<<<<<<< HEAD
 const LabeledField = ({
   label,
   icon: Icon,
@@ -235,6 +331,20 @@ const LabeledField = ({
         className="flex-1 bg-transparent outline-none font-semibold text-base placeholder:text-muted-foreground/60"
       />
     </div>
+=======
+const Field = ({
+  icon: Icon, placeholder, value, onChange, type = "text",
+}: { icon: any; placeholder: string; value: string; onChange: (v: string) => void; type?: string }) => (
+  <div className="flex items-center gap-3 bg-card border-2 border-border rounded-2xl px-4 py-3.5 shadow-soft focus-within:border-primary transition-smooth">
+    <Icon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+    <input
+      type={type}
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="flex-1 bg-transparent outline-none font-semibold text-base placeholder:text-muted-foreground/60"
+    />
+>>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
   </div>
 );
 
