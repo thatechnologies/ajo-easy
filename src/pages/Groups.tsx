@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiListGroups, type Group } from "@/lib/ajo-data";
@@ -21,15 +20,6 @@ const Groups = () => {
       })
       .finally(() => setLoading(false));
   }, []);
-=======
-import { useNavigate } from "react-router-dom";
-import { mockGroups } from "@/lib/ajo-data";
-import { formatNaira } from "@/components/Money";
-import { Plus, UserPlus, Users, ChevronRight, Filter } from "lucide-react";
-
-const Groups = () => {
-  const navigate = useNavigate();
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 
   return (
     <div className="phone-shell flex flex-col">
@@ -38,11 +28,7 @@ const Groups = () => {
         <div className="relative flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">My Groups</h1>
-<<<<<<< HEAD
             <p className="text-sm opacity-90">{groups.length} active groups</p>
-=======
-            <p className="text-sm opacity-90">{mockGroups.length} active groups</p>
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
           </div>
           <button className="p-2.5 rounded-full bg-white/15 hover:bg-white/25"><Filter className="w-5 h-5" /></button>
         </div>
@@ -61,7 +47,6 @@ const Groups = () => {
         </div>
 
         <div className="space-y-3">
-<<<<<<< HEAD
           {loading ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="w-7 h-7 animate-spin text-primary" />
@@ -71,10 +56,6 @@ const Groups = () => {
           ) : (
             groups.map((g) => {
               const progress = g.totalMembers ? (g.paidThisCycle / g.totalMembers) * 100 : 0;
-=======
-          {mockGroups.map((g) => {
-            const progress = (g.paidThisCycle / g.totalMembers) * 100;
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
             return (
               <button
                 key={g.id}
@@ -101,12 +82,8 @@ const Groups = () => {
                 </div>
               </button>
             );
-<<<<<<< HEAD
           })
           )}
-=======
-          })}
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
         </div>
       </div>
     </div>

@@ -1,8 +1,5 @@
 import type { Config } from "tailwindcss";
-<<<<<<< HEAD
 import tailwindcssAnimate from "tailwindcss-animate";
-=======
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 
 export default {
   darkMode: ["class"],
@@ -97,9 +94,5 @@ export default {
       },
     },
   },
-<<<<<<< HEAD
   plugins: [tailwindcssAnimate],
-=======
-  plugins: [require("tailwindcss-animate")],
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 } satisfies Config;

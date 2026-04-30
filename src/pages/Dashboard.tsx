@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-<<<<<<< HEAD
 import { Plus, UserPlus, Wallet, ArrowUpRight, Calendar, Users, ChevronRight, Wifi, WifiOff, ArrowDownLeft } from "lucide-react";
 import { Money, formatNaira } from "@/components/Money";
 import { apiListGroups, apiListNotifications, type AppNotification, type Group } from "@/lib/ajo-data";
@@ -18,17 +17,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-=======
-import { Plus, UserPlus, Wallet, ArrowUpRight, Calendar, Users, ChevronRight, Wifi, WifiOff } from "lucide-react";
-import { Money, formatNaira } from "@/components/Money";
-import { mockGroups } from "@/lib/ajo-data";
-import { useState } from "react";
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [online] = useState(true);
-<<<<<<< HEAD
   const { user } = useAuth();
   const [groups, setGroups] = useState<Group[]>([]);
   const [activity, setActivity] = useState<AppNotification[]>([]);
@@ -66,12 +58,6 @@ const Dashboard = () => {
     () => groups.filter((g) => g.members.find((m) => m.name === (user?.full_name ?? "You") && !m.paid)).length,
     [groups, user],
   );
-=======
-
-  const totalContributed = mockGroups.reduce((s, g) => s + g.myContribution, 0);
-  const nextPayout = mockGroups.find((g) => g.nextPayoutMember === "You");
-  const pending = mockGroups.filter((g) => g.members.find((m) => m.name === "You" && !m.paid)).length;
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 
   return (
     <div className="phone-shell flex flex-col">
@@ -83,11 +69,7 @@ const Dashboard = () => {
         <div className="relative flex items-center justify-between mb-6">
           <div>
             <p className="text-xs opacity-80">Good morning,</p>
-<<<<<<< HEAD
             <p className="text-lg font-bold">{user?.full_name ?? "—"} 👋</p>
-=======
-            <p className="text-lg font-bold">Ada Okonkwo 👋</p>
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
           </div>
           <div className="flex items-center gap-1.5 text-[11px] font-medium bg-white/15 backdrop-blur-sm px-2.5 py-1.5 rounded-full">
             {online ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
@@ -98,50 +80,31 @@ const Dashboard = () => {
         <div className="relative">
           <p className="text-xs uppercase tracking-widest opacity-80 mb-2 font-semibold">Total Contributed</p>
           <Money amount={totalContributed} size="xl" className="block mb-1" />
-<<<<<<< HEAD
           <p className="text-xs opacity-80">Across {groups.length} active groups</p>
-=======
-          <p className="text-xs opacity-80">Across {mockGroups.length} active groups</p>
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
         </div>
       </div>
 
       {/* Quick stats - overlap */}
       <div className="px-5 -mt-14 relative z-10 grid grid-cols-2 gap-3">
         <button
-<<<<<<< HEAD
           onClick={() => (user?.kyc_status === "verified" ? navigate("/create-group") : navigate("/kyc"))}
-=======
-          onClick={() => navigate("/create-group")}
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
           className="bg-card hover:bg-secondary/50 transition-smooth rounded-2xl p-4 shadow-card text-left active:scale-[0.98]"
         >
           <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center mb-3 shadow-soft">
             <Plus className="w-5 h-5 text-primary-foreground" strokeWidth={2.5} />
           </div>
           <p className="font-bold text-sm">Create Group</p>
-<<<<<<< HEAD
           <p className="text-[11px] text-muted-foreground">{user?.kyc_status === "verified" ? "Start a new ajo" : "Verify KYC first"}</p>
         </button>
         <button
           onClick={() => (user?.kyc_status === "verified" ? navigate("/join-group") : navigate("/kyc"))}
-=======
-          <p className="text-[11px] text-muted-foreground">Start a new ajo</p>
-        </button>
-        <button
-          onClick={() => navigate("/join-group")}
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
           className="bg-card hover:bg-secondary/50 transition-smooth rounded-2xl p-4 shadow-card text-left active:scale-[0.98]"
         >
           <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center mb-3 shadow-soft">
             <UserPlus className="w-5 h-5 text-accent-foreground" strokeWidth={2.5} />
           </div>
           <p className="font-bold text-sm">Join Group</p>
-<<<<<<< HEAD
           <p className="text-[11px] text-muted-foreground">{user?.kyc_status === "verified" ? "Use invite code" : "Verify KYC first"}</p>
-=======
-          <p className="text-[11px] text-muted-foreground">Use invite code</p>
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
         </button>
       </div>
 
@@ -162,11 +125,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-<<<<<<< HEAD
-        
-
-=======
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
         {/* Groups list */}
         <div>
           <div className="flex items-center justify-between mb-3 px-1">
@@ -177,15 +135,9 @@ const Dashboard = () => {
           </div>
 
           <div className="space-y-3">
-<<<<<<< HEAD
             {groups.map((g) => {
               const mePaid = g.myPaidThisCycle;
               const progress = g.totalMembers ? (g.paidThisCycle / g.totalMembers) * 100 : 0;
-=======
-            {mockGroups.map((g) => {
-              const me = g.members.find((m) => m.name === "You");
-              const progress = (g.paidThisCycle / g.totalMembers) * 100;
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
               return (
                 <button
                   key={g.id}
@@ -202,11 +154,7 @@ const Dashboard = () => {
                         <p className="text-[11px] text-muted-foreground">{formatNaira(g.amount)} • {g.frequency}</p>
                       </div>
                     </div>
-<<<<<<< HEAD
                     {mePaid === false ? (
-=======
-                    {me && !me.paid ? (
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
                       <span className="text-[10px] font-bold uppercase bg-warning/15 text-warning px-2 py-1 rounded-full whitespace-nowrap">Pay due</span>
                     ) : (
                       <span className="text-[10px] font-bold uppercase bg-success/15 text-success px-2 py-1 rounded-full whitespace-nowrap">Paid</span>
@@ -236,7 +184,6 @@ const Dashboard = () => {
             })}
           </div>
         </div>
-<<<<<<< HEAD
 
         {/* Recent activity */}
         <div>
@@ -316,9 +263,6 @@ const Dashboard = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-=======
-      </div>
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
     </div>
   );
 };

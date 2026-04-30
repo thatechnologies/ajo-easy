@@ -5,10 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-<<<<<<< HEAD
 import { apiCreateGroup } from "@/lib/ajo-data";
-=======
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,10 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { PageHeader } from "@/components/PageHeader";
 import { formatNaira } from "@/components/Money";
 import { toast } from "@/hooks/use-toast";
-<<<<<<< HEAD
 import { useAuth } from "@/hooks/useAuth";
-=======
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 import {
   CalendarDays,
   Users,
@@ -76,7 +70,6 @@ const formSchema = z.object({
     { message: "Start date can't be in the past" }
   ),
   order: z.enum(["random", "manual"], { required_error: "Choose payout order" }),
-<<<<<<< HEAD
   bankName: z.preprocess(
     (v) => {
       const s = typeof v === "string" ? v.trim() : "";
@@ -103,34 +96,13 @@ const formSchema = z.object({
     },
     z.string().max(80, "Keep it under 80 characters").optional(),
   ),
-=======
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-<<<<<<< HEAD
 const CreateGroup = () => {
   const navigate = useNavigate();
   const { markAdmin, user } = useAuth();
-=======
-const generateInviteCode = (name: string) => {
-  const slug =
-    name
-      .replace(/[^a-zA-Z0-9 ]/g, "")
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((w) => w[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 4) || "AJO";
-  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `AJO-${slug}-${rand}`;
-};
-
-const CreateGroup = () => {
-  const navigate = useNavigate();
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [created, setCreated] = useState<{
     data: FormValues;
@@ -149,31 +121,24 @@ const CreateGroup = () => {
       members: 8,
       startDate: new Date(),
       order: "random",
-<<<<<<< HEAD
       bankName: "",
       bankAccountNumber: "",
       bankAccountName: "",
-=======
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
     },
   });
 
   const values = form.watch();
 
   const handleNext = async () => {
-<<<<<<< HEAD
     if (user?.kyc_status !== "verified") {
       toast({ title: "KYC required", description: "Verify your KYC before creating a group.", variant: "destructive" });
       navigate("/kyc");
       return;
     }
-=======
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
     const valid = await form.trigger(["name", "amount", "frequency"]);
     if (valid) setStep(2);
   };
 
-<<<<<<< HEAD
   const onSubmit = async (data: FormValues) => {
     try {
       if (user?.kyc_status !== "verified") {
@@ -204,13 +169,6 @@ const CreateGroup = () => {
         toast({ title: "Could not create group", description: message, variant: "destructive" });
       }
     }
-=======
-  const onSubmit = (data: FormValues) => {
-    const inviteCode = generateInviteCode(data.name);
-    const inviteLink = `${window.location.origin}/join-group?code=${inviteCode}`;
-    setCreated({ data, inviteCode, inviteLink });
-    setStep(3);
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
   };
 
   const handleCopy = async (value: string, kind: "code" | "link") => {
@@ -617,7 +575,6 @@ const CreateGroup = () => {
                   )}
                 />
 
-<<<<<<< HEAD
                 {/* Bank details */}
                 <div className="rounded-2xl bg-card border-2 border-border p-4 shadow-soft space-y-4">
                   <div>
@@ -693,8 +650,6 @@ const CreateGroup = () => {
                   />
                 </div>
 
-=======
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
                 {/* Summary */}
                 <div className="rounded-2xl bg-gradient-card border border-border p-4 shadow-soft space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">

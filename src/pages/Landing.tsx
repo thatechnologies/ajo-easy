@@ -1,7 +1,5 @@
-<<<<<<< HEAD
-=======
+
 import { useState, FormEvent } from "react";
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,33 +8,25 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-<<<<<<< HEAD
-=======
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
+
 import {
   ShieldCheck,
   Wallet,
   BellRing,
   Users,
-<<<<<<< HEAD
+
   ArrowRight,
-=======
+
   Sparkles,
   ArrowRight,
   CheckCircle2,
   Loader2,
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
   Star,
   Smartphone,
   Lock,
   Zap,
-<<<<<<< HEAD
-} from "lucide-react";
-import kowopeLogo from "@/assets/kowope-logo.png";
-
-=======
   Share2,
   Copy,
   Check,
@@ -44,6 +34,8 @@ import kowopeLogo from "@/assets/kowope-logo.png";
   XCircle,
   Mail,
 } from "lucide-react";
+import kowopeLogo from "@/assets/kowope-logo.png";
+ 
 import kowopeLogo from "@/assets/kowope-logo.png";
 
 const WAITLIST_STORAGE_KEY = "kowope:waitlist-entries";
@@ -97,7 +89,7 @@ const isFormspreeConfigured =
   !!FORMSPREE_ENDPOINT &&
   /^https:\/\/formspree\.io\/f\/.+/.test(FORMSPREE_ENDPOINT);
 
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
+
 const features = [
   {
     icon: ShieldCheck,
@@ -158,11 +150,9 @@ const testimonials = [
 const faqs = [
   {
     q: "Is Kowope free to use?",
-<<<<<<< HEAD
     a: "Yes. Creating and joining groups is free. We’ll add optional paid features later (e.g., premium admin tools).",
-=======
     a: "Joining the waitlist is completely free. Early users will get the core ajo features at no cost when we launch.",
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
+
   },
   {
     q: "How does the money move?",
@@ -173,19 +163,16 @@ const faqs = [
     a: "We never hold your money. Kowope is the trust and tracking layer — funds move through trusted Nigerian payment rails.",
   },
   {
-<<<<<<< HEAD
+
     q: "How do I start?",
     a: "Create an account, create a group (or join with an invite code), then members submit payments with a transaction reference.",
-=======
     q: "When will it launch?",
     a: "We're rolling out to waitlist members first in the coming weeks. Sign up to be among the first invited.",
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
+
   },
 ];
 
 const Landing = () => {
-<<<<<<< HEAD
-=======
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -294,7 +281,6 @@ const Landing = () => {
     }
   };
 
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Top bar */}
@@ -315,33 +301,31 @@ const Landing = () => {
             <a href="#testimonials" className="hover:text-foreground transition-smooth">
               Stories
             </a>
-<<<<<<< HEAD
-=======
-            <a href="#share" className="hover:text-foreground transition-smooth">
+
+           <a href="#share" className="hover:text-foreground transition-smooth">
               Share
             </a>
             <a href="#status" className="hover:text-foreground transition-smooth">
               Status
             </a>
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
+
             <a href="#faq" className="hover:text-foreground transition-smooth">
               FAQ
             </a>
           </nav>
-<<<<<<< HEAD
+
           <Button asChild size="sm" className="hidden sm:inline-flex h-10 rounded-full font-bold bg-foreground text-background hover:opacity-90">
             <Link to="/auth">
               Get started <ArrowRight className="w-4 h-4" />
             </Link>
           </Button>
-=======
           <a
             href="#waitlist"
             className="hidden sm:inline-flex items-center gap-1.5 text-sm font-bold bg-foreground text-background px-4 py-2 rounded-full hover:opacity-90 transition-smooth"
           >
             Join waitlist <ArrowRight className="w-4 h-4" />
           </a>
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
+
         </div>
       </header>
 
@@ -372,7 +356,7 @@ const Landing = () => {
               reminders — all in one place.
             </p>
 
-<<<<<<< HEAD
+
             <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md">
               <Button asChild size="lg" className="h-12 rounded-2xl font-bold bg-gradient-primary shadow-glow">
                 <Link to="/auth?mode=signup">Create account</Link>
@@ -381,7 +365,7 @@ const Landing = () => {
                 <Link to="/auth?mode=signin">Sign in</Link>
               </Button>
             </div>
-=======
+
             {/* Waitlist form */}
             <form
               id="waitlist"
@@ -427,7 +411,7 @@ const Landing = () => {
             <p className="mt-3 text-xs text-muted-foreground">
               No spam. We'll only email you when there's a spot for your group.
             </p>
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
+
 
             {/* Mini social proof */}
             <div className="mt-8 flex items-center gap-4">
@@ -512,19 +496,19 @@ const Landing = () => {
               {/* Floating card */}
               <div className="absolute -left-4 sm:-left-8 bottom-24 bg-card border border-border rounded-2xl p-3 shadow-elevated hidden sm:flex items-center gap-2.5 animate-fade-in">
                 <div className="w-9 h-9 rounded-xl bg-success/15 grid place-items-center">
-<<<<<<< HEAD
+
                   <Smartphone className="w-4 h-4 text-success" />
                 </div>
                 <div>
                   <p className="text-xs font-bold">Track who paid</p>
                   <p className="text-[10px] text-muted-foreground">in real time</p>
-=======
+
                   <CheckCircle2 className="w-4 h-4 text-success" />
                 </div>
                 <div>
                   <p className="text-xs font-bold">Tunde paid ₦20,000</p>
                   <p className="text-[10px] text-muted-foreground">2 min ago</p>
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
+
                 </div>
               </div>
             </div>
@@ -618,10 +602,7 @@ const Landing = () => {
       </section>
 
       {/* Testimonials */}
-      
-
-<<<<<<< HEAD
-=======
+    
       {/* Share waitlist */}
       <section id="share" className="py-20 lg:py-24">
         <div className="max-w-3xl mx-auto px-5 sm:px-8">
@@ -789,7 +770,7 @@ const Landing = () => {
         </div>
       </section>
 
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
+
       {/* FAQ */}
       <section id="faq" className="py-20 lg:py-28">
         <div className="max-w-3xl mx-auto px-5 sm:px-8">
@@ -828,7 +809,6 @@ const Landing = () => {
           <div className="relative grid lg:grid-cols-[1.4fr_1fr] gap-8 items-center">
             <div>
               <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-<<<<<<< HEAD
                 Start saving with your group today.
               </h2>
               <p className="mt-3 opacity-90 max-w-lg">
@@ -840,7 +820,6 @@ const Landing = () => {
                 <Smartphone className="w-5 h-5" /> Create account
               </Link>
             </Button>
-=======
                 Be first in line when we launch.
               </h2>
               <p className="mt-3 opacity-90 max-w-lg">
@@ -854,7 +833,6 @@ const Landing = () => {
             >
               <Smartphone className="w-5 h-5" /> Join the waitlist
             </a>
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
           </div>
         </div>
       </section>
@@ -878,11 +856,9 @@ const Landing = () => {
             <a href="#faq" className="hover:text-foreground transition-smooth">
               FAQ
             </a>
-<<<<<<< HEAD
             <Link to="/auth" className="hover:text-foreground transition-smooth">
-=======
             <Link to="/get-started" className="hover:text-foreground transition-smooth">
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
+
               Open app
             </Link>
           </div>

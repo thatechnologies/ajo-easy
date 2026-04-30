@@ -4,19 +4,12 @@ import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Money } from "@/components/Money";
-<<<<<<< HEAD
-=======
-import { supabase } from "@/integrations/supabase/client";
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Check, X, Clock, ImageIcon, ExternalLink, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-<<<<<<< HEAD
 import { apiAdminListContributions, apiAdminReviewContribution } from "@/lib/ajo-data";
-=======
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 
 interface Contribution {
   id: string;
@@ -28,13 +21,8 @@ interface Contribution {
   receipt_url: string | null;
   status: "pending" | "confirmed" | "rejected";
   submitted_at: string;
-<<<<<<< HEAD
   member_name: string | null;
   group_name: string | null;
-=======
-  groups: { name: string } | null;
-  profiles: { full_name: string | null; phone: string | null } | null;
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 }
 
 const Payments = () => {
@@ -48,7 +36,6 @@ const Payments = () => {
   const [openReceipt, setOpenReceipt] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-<<<<<<< HEAD
     setLoading(true);
     try {
       const { contributions } = await apiAdminListContributions(tab);
@@ -66,43 +53,6 @@ const Payments = () => {
       setLoading(false);
     }
   }, [tab]);
-=======
-    if (!user) return;
-    setLoading(true);
-    // Find groups where the current user is admin
-    const { data: adminGroups } = await supabase
-      .from("group_members")
-      .select("group_id")
-      .eq("user_id", user.id)
-      .eq("is_admin", true);
-    const groupIds = (adminGroups ?? []).map((g) => g.group_id);
-    if (!groupIds.length) {
-      setItems([]);
-      setLoading(false);
-      return;
-    }
-    const { data, error } = await supabase
-      .from("contributions")
-      .select("*, groups(name)")
-      .in("group_id", groupIds)
-      .eq("status", tab)
-      .order("submitted_at", { ascending: false });
-    if (error) {
-      toast({ title: "Couldn't load payments", description: error.message, variant: "destructive" });
-      setItems([]);
-      setLoading(false);
-      return;
-    }
-    // Fetch profiles for member_ids
-    const memberIds = Array.from(new Set((data ?? []).map((d: any) => d.member_id)));
-    const { data: profs } = memberIds.length
-      ? await supabase.from("profiles").select("id, full_name, phone").in("id", memberIds)
-      : { data: [] as any[] };
-    const profMap = new Map((profs ?? []).map((p: any) => [p.id, p]));
-    setItems((data ?? []).map((c: any) => ({ ...c, profiles: profMap.get(c.member_id) ?? null })) as any);
-    setLoading(false);
-  }, [user, tab]);
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -110,28 +60,14 @@ const Payments = () => {
 
   useEffect(() => { load(); }, [load]);
 
-<<<<<<< HEAD
   const viewReceipt = async (dataUrl: string, id: string) => {
     setOpenReceipt(id);
     setReceiptUrl(dataUrl);
-=======
-  const viewReceipt = async (path: string, id: string) => {
-    setOpenReceipt(id);
-    setReceiptUrl(null);
-    const { data, error } = await supabase.storage.from("receipts").createSignedUrl(path, 300);
-    if (error) {
-      toast({ title: "Couldn't load receipt", description: error.message, variant: "destructive" });
-      setOpenReceipt(null);
-      return;
-    }
-    setReceiptUrl(data.signedUrl);
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
   };
 
   const review = async (id: string, status: "confirmed" | "rejected") => {
     if (!user) return;
     setReviewingId(id);
-<<<<<<< HEAD
     try {
       await apiAdminReviewContribution(id, status);
       toast({ title: status === "confirmed" ? "Payment confirmed ✓" : "Payment rejected" });
@@ -143,20 +79,6 @@ const Payments = () => {
     } finally {
       setReviewingId(null);
     }
-=======
-    const { error } = await supabase
-      .from("contributions")
-      .update({ status, reviewed_at: new Date().toISOString(), reviewed_by: user.id })
-      .eq("id", id);
-    setReviewingId(null);
-    if (error) {
-      toast({ title: "Update failed", description: error.message, variant: "destructive" });
-      return;
-    }
-    toast({ title: status === "confirmed" ? "Payment confirmed ✓" : "Payment rejected" });
-    setItems((prev) => prev.filter((i) => i.id !== id));
-    setOpenReceipt(null);
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
   };
 
   if (authLoading) {
@@ -203,15 +125,10 @@ const Payments = () => {
               <div key={c.id} className="rounded-2xl bg-card border border-border shadow-soft p-4">
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
-<<<<<<< HEAD
                     <p className="font-bold text-sm truncate">{c.member_name ?? "Member"}</p>
                     <p className="text-[11px] text-muted-foreground truncate">
                       {(c.group_name ?? "Group")} • Cycle {c.cycle_number}
                     </p>
-=======
-                    <p className="font-bold text-sm truncate">{c.profiles?.full_name ?? "Member"}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{c.groups?.name} • Cycle {c.cycle_number}</p>
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
                   </div>
                   <div className="text-right flex-shrink-0">
                     <Money amount={Number(c.amount)} size="md" className="text-primary" />

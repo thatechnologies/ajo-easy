@@ -7,16 +7,8 @@ import { BottomNav } from "@/components/BottomNav";
 import { AuthProvider } from "@/hooks/useAuth";
 import { RequireAuth } from "@/components/RequireAuth";
 import Landing from "./pages/Landing.tsx";
-<<<<<<< HEAD
 import Auth from "./pages/Auth.tsx";
 import Kyc from "./pages/Kyc.tsx";
-=======
-import Index from "./pages/Index.tsx";
-import Signup from "./pages/Signup.tsx";
-import Auth from "./pages/Auth.tsx";
-import Otp from "./pages/Otp.tsx";
-import ProfileSetup from "./pages/ProfileSetup.tsx";
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
 import Dashboard from "./pages/Dashboard.tsx";
 import CreateGroup from "./pages/CreateGroup.tsx";
 import JoinGroup from "./pages/JoinGroup.tsx";
@@ -40,36 +32,96 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Landing />} />
-<<<<<<< HEAD
             <Route path="/auth" element={<Auth />} />
             <Route path="/signup" element={<Auth />} />
-            <Route path="/kyc" element={<RequireAuth><Kyc /></RequireAuth>} />
-            <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-            <Route path="/groups" element={<RequireAuth><Groups /></RequireAuth>} />
-            <Route path="/create-group" element={<RequireAuth><CreateGroup /></RequireAuth>} />
-            <Route path="/join-group" element={<RequireAuth><JoinGroup /></RequireAuth>} />
-            <Route path="/group/:id" element={<RequireAuth><GroupDetail /></RequireAuth>} />
-            <Route path="/pay/:id" element={<RequireAuth><Pay /></RequireAuth>} />
-            <Route path="/notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
-            <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-            <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
-=======
-            <Route path="/get-started" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/otp" element={<Otp />} />
-            <Route path="/profile-setup" element={<ProfileSetup />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/groups" element={<Groups />} />
-            <Route path="/create-group" element={<RequireAuth><CreateGroup /></RequireAuth>} />
-            <Route path="/join-group" element={<JoinGroup />} />
-            <Route path="/group/:id" element={<GroupDetail />} />
-            <Route path="/pay/:id" element={<RequireAuth><Pay /></RequireAuth>} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/admin" element={<Admin />} />
->>>>>>> 74654b9a46e2cf75a1923c93a4b477e006116acc
-            <Route path="/payments" element={<RequireAuth><Payments /></RequireAuth>} />
+            <Route
+              path="/kyc"
+              element={
+                <RequireAuth>
+                  <Kyc />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <RequireAuth>
+                  <Dashboard />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/groups"
+              element={
+                <RequireAuth>
+                  <Groups />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/create-group"
+              element={
+                <RequireAuth>
+                  <CreateGroup />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/join-group"
+              element={
+                <RequireAuth>
+                  <JoinGroup />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/group/:id"
+              element={
+                <RequireAuth>
+                  <GroupDetail />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/pay/:id"
+              element={
+                <RequireAuth>
+                  <Pay />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <RequireAuth>
+                  <Notifications />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <RequireAuth>
+                  <Profile />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <RequireAuth>
+                  <Admin />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/payments"
+              element={
+                <RequireAuth>
+                  <Payments />
+                </RequireAuth>
+              }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
