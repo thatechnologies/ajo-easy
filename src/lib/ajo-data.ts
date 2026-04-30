@@ -5,6 +5,7 @@ export interface Member {
   name: string;
   phone: string;
   paid: boolean;
+  paymentStatus?: "none" | "pending" | "confirmed" | "rejected";
   receivedPayout: boolean;
   payoutPosition: number;
   isAdmin?: boolean;
@@ -19,11 +20,13 @@ export interface Group {
   currentCycle: number;
   nextPayoutDate: string;
   nextPayoutMember: string;
+  nextPayoutMemberId?: string | null;
   members: Member[];
   inviteCode: string;
   totalContributed: number;
   myContribution: number;
   paidThisCycle: number;
+  confirmedThisCycle?: number;
   myPaidThisCycle?: boolean;
   startDate: string;
   bankName?: string | null;
@@ -265,7 +268,9 @@ const apiJson = async <T>(path: string, init?: RequestInit, auth = true): Promis
   return body as T;
 };
 
-type ApiUser = { id: string; email: string; full_name: string; phone: string };
+export type KycStatus = "unverified" | "verified" | "rejected";
+
+type ApiUser = { id: string; email: string; full_name: string; phone: string; kyc_status: KycStatus };
 
 export const apiLogin = async (input: { email: string; password: string }) => {
   return apiJson<{ token: string; user: ApiUser }>("/auth/login", { method: "POST", body: JSON.stringify(input) }, false);
@@ -281,6 +286,14 @@ export const apiSignup = async (input: { email: string; password: string; fullNa
 
 export const apiMe = async () => {
   return apiJson<{ user: ApiUser }>("/auth/me");
+};
+
+export const apiSubmitKyc = async (input: { nin: string; dob: string; ninCardDataUrl: string }) => {
+  return apiJson<{ ok: true }>("/auth/kyc", { method: "POST", body: JSON.stringify(input) });
+};
+
+export const apiGetKyc = async () => {
+  return apiJson<{ kyc: { status: KycStatus; submitted_at: string | null; verified_at: string | null } }>("/auth/kyc");
 };
 
 type ApiGroupRow = {
@@ -300,7 +313,9 @@ type ApiGroupRow = {
   total_contributed: string | number;
   my_contribution: string | number;
   paid_this_cycle: number;
+  confirmed_this_cycle: number;
   i_paid_this_cycle: boolean;
+  next_payout_member_id?: string | null;
   next_payout_member: string | null;
   next_payout_date: string | null;
 };
@@ -315,11 +330,13 @@ const toGroup = (g: ApiGroupRow): Group => {
     currentCycle: g.current_cycle,
     nextPayoutDate: g.next_payout_date ?? "—",
     nextPayoutMember: g.next_payout_member ?? "—",
+    nextPayoutMemberId: g.next_payout_member_id ?? null,
     members: [],
     inviteCode: g.invite_code,
     totalContributed: Number(g.total_contributed ?? 0),
     myContribution: Number(g.my_contribution ?? 0),
     paidThisCycle: Number(g.paid_this_cycle ?? 0),
+    confirmedThisCycle: Number(g.confirmed_this_cycle ?? 0),
     myPaidThisCycle: Boolean(g.i_paid_this_cycle),
     startDate: g.start_date,
     bankName: g.bank_name ?? null,
@@ -335,18 +352,50 @@ export const apiListGroups = async (): Promise<Group[]> => {
   return groups.map(toGroup);
 };
 
+export const apiGetGroup = async (groupId: string): Promise<Group> => {
+  const { group } = await apiJson<{ group: ApiGroupRow }>(`/groups/${groupId}`);
+  return toGroup(group);
+};
+
 export const apiCreateGroup = async (input: {
   name: string;
   amount: number;
   frequency: "Weekly" | "Monthly";
   totalMembers: number;
   startDate?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankAccountName?: string;
 }) => {
   return apiJson<{ groupId: string; inviteCode: string }>("/groups", { method: "POST", body: JSON.stringify(input) });
 };
 
 export const apiJoinGroup = async (inviteCode: string) => {
-  return apiJson<{ groupId: string }>("/groups/join", { method: "POST", body: JSON.stringify({ inviteCode }) });
+  return apiJson<{ groupId: string; status: "pending" }>("/groups/join", { method: "POST", body: JSON.stringify({ inviteCode }) });
+};
+
+export type JoinRequest = {
+  id: string;
+  group_id: string;
+  user_id: string;
+  status: "pending" | "approved" | "rejected";
+  requested_at: string;
+  full_name: string;
+  phone: string;
+  email: string;
+};
+
+export const apiListJoinRequests = async (groupId: string, status: "pending" | "approved" | "rejected" = "pending") => {
+  const qs = `?status=${encodeURIComponent(status)}`;
+  return apiJson<{ requests: JoinRequest[] }>(`/groups/${groupId}/join-requests${qs}`);
+};
+
+export const apiReviewJoinRequest = async (
+  groupId: string,
+  requestId: string,
+  status: "approved" | "rejected",
+) => {
+  return apiJson<{ ok: true }>(`/groups/${groupId}/join-requests/${requestId}`, { method: "PATCH", body: JSON.stringify({ status }) });
 };
 
 type ApiMemberRow = {
@@ -357,6 +406,7 @@ type ApiMemberRow = {
   full_name: string;
   phone: string;
   paid: boolean;
+  contribution_status: "pending" | "confirmed" | "rejected" | null;
   received_payout: boolean;
 };
 
@@ -367,6 +417,7 @@ export const apiGetGroupMembers = async (groupId: string): Promise<Member[]> => 
     name: m.full_name,
     phone: m.phone,
     paid: m.paid,
+    paymentStatus: m.contribution_status ?? "none",
     receivedPayout: m.received_payout,
     payoutPosition: m.payout_position,
     isAdmin: m.is_admin,
@@ -381,6 +432,60 @@ export const apiSubmitContribution = async (input: {
   return apiJson<{ contributionId: string }>(`/groups/${input.groupId}/contributions`, {
     method: "POST",
     body: JSON.stringify({ transactionReference: input.transactionReference, receiptUrl: input.receiptUrl }),
+  });
+};
+
+export type GroupContributionStatus = "pending" | "confirmed" | "rejected";
+
+export type GroupContribution = {
+  id: string;
+  group_id: string;
+  member_id: string;
+  cycle_number: number;
+  amount: number;
+  transaction_reference: string;
+  receipt_url: string | null;
+  status: GroupContributionStatus;
+  submitted_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  member_name: string | null;
+};
+
+type ApiGroupContribution = Omit<GroupContribution, "amount"> & { amount: string | number };
+
+export const apiGetGroupContributions = async (groupId: string, cycle?: number) => {
+  const qs = cycle ? `?cycle=${encodeURIComponent(String(cycle))}` : "";
+  const res = await apiJson<{ contributions: ApiGroupContribution[]; isAdmin: boolean }>(`/groups/${groupId}/contributions${qs}`);
+  return {
+    isAdmin: res.isAdmin,
+    contributions: res.contributions.map((c) => ({ ...c, amount: Number(c.amount) })),
+  };
+};
+
+export type GroupPayout = {
+  id: string;
+  group_id: string;
+  recipient_id: string;
+  recipient_name: string | null;
+  cycle_number: number;
+  amount: number;
+  paid_at: string;
+  recorded_by: string;
+  notes: string | null;
+};
+
+type ApiGroupPayout = Omit<GroupPayout, "amount"> & { amount: string | number };
+
+export const apiGetGroupPayouts = async (groupId: string) => {
+  const { payouts } = await apiJson<{ payouts: ApiGroupPayout[] }>(`/groups/${groupId}/payouts`);
+  return payouts.map((p) => ({ ...p, amount: Number(p.amount) }));
+};
+
+export const apiRecordPayout = async (groupId: string, input?: { recipientId?: string; notes?: string }) => {
+  return apiJson<{ payoutId: string; advancedToCycle: number }>(`/groups/${groupId}/payouts`, {
+    method: "POST",
+    body: JSON.stringify(input ?? {}),
   });
 };
 
@@ -404,4 +509,48 @@ export const apiAdminListContributions = async (status: "pending" | "confirmed" 
 
 export const apiAdminReviewContribution = async (id: string, status: "confirmed" | "rejected") => {
   return apiJson<{ ok: true }>(`/admin/contributions/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
+};
+
+export const apiUpdateGroupBank = async (
+  groupId: string,
+  input: { bankName?: string | null; bankAccountNumber?: string | null; bankAccountName?: string | null },
+) => {
+  return apiJson<{ ok: true }>(`/groups/${groupId}/bank`, { method: "PATCH", body: JSON.stringify(input) });
+};
+
+export type ApiNotificationType =
+  | "join_request_created"
+  | "join_request_approved"
+  | "join_request_rejected"
+  | "contribution_submitted"
+  | "contribution_confirmed"
+  | "contribution_rejected"
+  | "payout_recorded";
+
+export type AppNotification = {
+  id: string;
+  type: ApiNotificationType;
+  title: string;
+  message: string;
+  group_id: string | null;
+  actor_id: string | null;
+  metadata: unknown;
+  created_at: string;
+  read_at: string | null;
+};
+
+export const apiListNotifications = async (input?: { unread?: boolean; limit?: number }) => {
+  const qs = new URLSearchParams();
+  if (input?.unread) qs.set("unread", "1");
+  if (input?.limit) qs.set("limit", String(input.limit));
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return apiJson<{ notifications: AppNotification[]; unreadCount: number }>(`/notifications${suffix}`);
+};
+
+export const apiMarkNotificationRead = async (id: string) => {
+  return apiJson<{ ok: true }>(`/notifications/${id}/read`, { method: "PATCH" });
+};
+
+export const apiMarkAllNotificationsRead = async () => {
+  return apiJson<{ ok: true }>(`/notifications/read-all`, { method: "POST" });
 };

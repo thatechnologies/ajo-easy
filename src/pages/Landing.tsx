@@ -1,4 +1,3 @@
-import { useState, FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,70 +6,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { toast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
 import {
   ShieldCheck,
   Wallet,
   BellRing,
   Users,
-  Sparkles,
   ArrowRight,
-  CheckCircle2,
-  Loader2,
   Star,
   Smartphone,
   Lock,
   Zap,
-  Share2,
-  Copy,
-  Check,
-  Search,
-  XCircle,
-  Mail,
 } from "lucide-react";
 import kowopeLogo from "@/assets/kowope-logo.png";
-
-const WAITLIST_STORAGE_KEY = "kowope:waitlist-entries";
-
-const normalizeEntry = (raw: string) => {
-  const v = raw.trim().toLowerCase();
-  if (v.includes("@")) return v;
-  // treat as phone: keep digits only, drop leading 0/country code variants
-  const digits = v.replace(/\D/g, "");
-  // normalize Nigerian numbers: 0XXXXXXXXXX -> 234XXXXXXXXXX
-  if (digits.startsWith("0") && digits.length === 11) return "234" + digits.slice(1);
-  return digits;
-};
-
-const readWaitlistEntries = (): string[] => {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(WAITLIST_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((x) => typeof x === "string") : [];
-  } catch {
-    return [];
-  }
-};
-
-const saveWaitlistEntry = (entry: string) => {
-  if (typeof window === "undefined") return;
-  const normalized = normalizeEntry(entry);
-  if (!normalized) return;
-  const existing = readWaitlistEntries();
-  if (!existing.includes(normalized)) {
-    try {
-      window.localStorage.setItem(
-        WAITLIST_STORAGE_KEY,
-        JSON.stringify([...existing, normalized])
-      );
-    } catch {
-      // ignore quota errors
-    }
-  }
-};
 
 const features = [
   {
@@ -132,7 +79,7 @@ const testimonials = [
 const faqs = [
   {
     q: "Is Kowope free to use?",
-    a: "Joining the waitlist is completely free. Early users will get the core ajo features at no cost when we launch.",
+    a: "Yes. Creating and joining groups is free. We’ll add optional paid features later (e.g., premium admin tools).",
   },
   {
     q: "How does the money move?",
@@ -143,99 +90,12 @@ const faqs = [
     a: "We never hold your money. Kowope is the trust and tracking layer — funds move through trusted Nigerian payment rails.",
   },
   {
-    q: "When will it launch?",
-    a: "We're rolling out to waitlist members first in the coming weeks. Sign up to be among the first invited.",
+    q: "How do I start?",
+    a: "Create an account, create a group (or join with an invite code), then members submit payments with a transaction reference.",
   },
 ];
 
 const Landing = () => {
-  const [email, setEmail] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [statusInput, setStatusInput] = useState("");
-  const [checkResult, setCheckResult] = useState<
-    null | { found: boolean; value: string }
-  >(null);
-
-  const handleCheckStatus = (e: FormEvent) => {
-    e.preventDefault();
-    const trimmed = statusInput.trim();
-    if (!trimmed) {
-      toast({
-        title: "Enter your email or phone",
-        description: "Type the email or phone number you used to join.",
-        variant: "destructive",
-      });
-      return;
-    }
-    const normalized = normalizeEntry(trimmed);
-    const entries = readWaitlistEntries();
-    const found = !!normalized && entries.includes(normalized);
-    setCheckResult({ found, value: trimmed });
-  };
-
-  const shareUrl =
-    typeof window !== "undefined" ? window.location.origin + "/" : "";
-  const shareMessage =
-    "I just joined the Kowope waitlist — the easiest way to run a savings circle without the wahala. Join me 👉 ";
-
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      toast({
-        title: "Link copied!",
-        description: "Share it with your group on WhatsApp, SMS, or anywhere.",
-      });
-      setTimeout(() => setCopied(false), 2200);
-    } catch {
-      toast({
-        title: "Couldn't copy",
-        description: "Long-press the link to copy it manually.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(
-    shareMessage + shareUrl
-  )}`;
-
-  const isValidEmail = (v: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!isValidEmail(email)) {
-      toast({
-        title: "Check your email",
-        description: "Please enter a valid email address.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await new Promise((r) => setTimeout(r, 350));
-      saveWaitlistEntry(email);
-      setSubmitted(true);
-      setEmail("");
-      toast({
-        title: "You're on the list! 🎉",
-        description: "Saved on this device (local-only).",
-      });
-    } catch {
-      toast({
-        title: "Couldn't join the waitlist",
-        description: "Please try again in a moment.",
-        variant: "destructive",
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Top bar */}
@@ -256,22 +116,15 @@ const Landing = () => {
             <a href="#testimonials" className="hover:text-foreground transition-smooth">
               Stories
             </a>
-            <a href="#share" className="hover:text-foreground transition-smooth">
-              Share
-            </a>
-            <a href="#status" className="hover:text-foreground transition-smooth">
-              Status
-            </a>
             <a href="#faq" className="hover:text-foreground transition-smooth">
               FAQ
             </a>
           </nav>
-          <a
-            href="#waitlist"
-            className="hidden sm:inline-flex items-center gap-1.5 text-sm font-bold bg-foreground text-background px-4 py-2 rounded-full hover:opacity-90 transition-smooth"
-          >
-            Join waitlist <ArrowRight className="w-4 h-4" />
-          </a>
+          <Button asChild size="sm" className="hidden sm:inline-flex h-10 rounded-full font-bold bg-foreground text-background hover:opacity-90">
+            <Link to="/auth">
+              Get started <ArrowRight className="w-4 h-4" />
+            </Link>
+          </Button>
         </div>
       </header>
 
@@ -302,51 +155,14 @@ const Landing = () => {
               reminders — all in one place.
             </p>
 
-            {/* Waitlist form */}
-            <form
-              id="waitlist"
-              onSubmit={handleSubmit}
-              className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md"
-            >
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@email.com"
-                disabled={submitting || submitted}
-                className="flex-1 bg-card border-2 border-border rounded-2xl px-4 py-3.5 outline-none focus:border-primary transition-smooth font-semibold shadow-soft placeholder:text-muted-foreground/60 disabled:opacity-60"
-                aria-label="Email address"
-              />
-              <Button
-                type="submit"
-                size="lg"
-                disabled={submitting || submitted}
-                className={cn(
-                  "h-auto py-3.5 px-6 font-bold rounded-2xl shadow-glow transition-smooth",
-                  submitted
-                    ? "bg-success text-success-foreground hover:bg-success"
-                    : "bg-gradient-primary"
-                )}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Joining…
-                  </>
-                ) : submitted ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 mr-2" /> You're in
-                  </>
-                ) : (
-                  <>
-                    Join waitlist <ArrowRight className="w-4 h-4 ml-1.5" />
-                  </>
-                )}
+            <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md">
+              <Button asChild size="lg" className="h-12 rounded-2xl font-bold bg-gradient-primary shadow-glow">
+                <Link to="/auth?mode=signup">Create account</Link>
               </Button>
-            </form>
-            <p className="mt-3 text-xs text-muted-foreground">
-              No spam. We'll only email you when there's a spot for your group.
-            </p>
+              <Button asChild size="lg" variant="outline" className="h-12 rounded-2xl font-bold">
+                <Link to="/auth?mode=signin">Sign in</Link>
+              </Button>
+            </div>
 
             {/* Mini social proof */}
             <div className="mt-8 flex items-center gap-4">
@@ -431,11 +247,11 @@ const Landing = () => {
               {/* Floating card */}
               <div className="absolute -left-4 sm:-left-8 bottom-24 bg-card border border-border rounded-2xl p-3 shadow-elevated hidden sm:flex items-center gap-2.5 animate-fade-in">
                 <div className="w-9 h-9 rounded-xl bg-success/15 grid place-items-center">
-                  <CheckCircle2 className="w-4 h-4 text-success" />
+                  <Smartphone className="w-4 h-4 text-success" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold">Tunde paid ₦20,000</p>
-                  <p className="text-[10px] text-muted-foreground">2 min ago</p>
+                  <p className="text-xs font-bold">Track who paid</p>
+                  <p className="text-[10px] text-muted-foreground">in real time</p>
                 </div>
               </div>
             </div>
@@ -531,173 +347,6 @@ const Landing = () => {
       {/* Testimonials */}
       
 
-      {/* Share waitlist */}
-      <section id="share" className="py-20 lg:py-24">
-        <div className="max-w-3xl mx-auto px-5 sm:px-8">
-          <div className="relative bg-card border border-border rounded-[2rem] p-8 sm:p-10 shadow-elevated overflow-hidden">
-            <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-primary/10 blur-3xl" />
-            <div className="absolute -bottom-16 -left-16 w-56 h-56 rounded-full bg-accent/15 blur-3xl" />
-            <div className="relative">
-              <div className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground rounded-full px-3 py-1.5 text-xs font-bold mb-5">
-                <Share2 className="w-3.5 h-3.5" />
-                Share this waitlist
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                Ajo is better with your people.
-              </h2>
-              <p className="mt-3 text-muted-foreground max-w-xl">
-                Invite your group, family, or market crew so you're all ready
-                to start saving together the moment we launch.
-              </p>
-
-              <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <a
-                  href={whatsappHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 bg-success text-success-foreground font-bold py-3.5 px-5 rounded-2xl shadow-soft hover:opacity-95 active:scale-[0.98] transition-smooth"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="w-5 h-5 fill-current"
-                    aria-hidden="true"
-                  >
-                    <path d="M19.05 4.91A10 10 0 0 0 4.1 18.27L3 22l3.83-1.04A10 10 0 1 0 19.05 4.9Zm-7.06 15.4a8.3 8.3 0 0 1-4.23-1.16l-.3-.18-2.27.62.6-2.22-.2-.32a8.3 8.3 0 1 1 6.4 3.26Zm4.55-6.18c-.25-.13-1.47-.73-1.7-.81-.22-.08-.39-.13-.55.13-.16.25-.63.81-.78.98-.14.16-.29.18-.54.06-.25-.13-1.05-.39-2-1.23a7.5 7.5 0 0 1-1.39-1.72c-.14-.25-.02-.38.11-.5.11-.11.25-.29.38-.43.13-.14.16-.25.25-.41.08-.16.04-.31-.02-.43-.06-.13-.55-1.34-.76-1.83-.2-.48-.4-.41-.55-.42h-.47c-.16 0-.42.06-.64.31-.22.25-.84.82-.84 2 0 1.18.86 2.32.98 2.48.13.16 1.7 2.6 4.12 3.65.58.25 1.03.4 1.38.51.58.18 1.1.16 1.52.1.46-.07 1.43-.58 1.63-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.47-.29Z" />
-                  </svg>
-                  Share on WhatsApp
-                </a>
-                <button
-                  type="button"
-                  onClick={handleCopyLink}
-                  className={cn(
-                    "inline-flex items-center justify-center gap-2 font-bold py-3.5 px-5 rounded-2xl border-2 shadow-soft active:scale-[0.98] transition-smooth",
-                    copied
-                      ? "bg-success/10 border-success text-success"
-                      : "bg-card border-border hover:border-primary hover:text-primary"
-                  )}
-                  aria-live="polite"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-5 h-5" /> Link copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-5 h-5" /> Copy link
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <div className="mt-5 flex items-center gap-2 bg-secondary/60 border border-border rounded-xl px-3 py-2.5">
-                <Share2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                <p className="text-xs sm:text-sm font-mono text-muted-foreground truncate">
-                  {shareUrl}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Check waitlist status */}
-      <section id="status" className="py-16 lg:py-20 bg-secondary/40 border-y border-border/60">
-        <div className="max-w-2xl mx-auto px-5 sm:px-8">
-          <div className="text-center max-w-xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-card border border-border rounded-full px-3 py-1.5 text-xs font-bold mb-4">
-              <Search className="w-3.5 h-3.5 text-primary" />
-              Check my invite status
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Already joined? Check your spot.
-            </h2>
-            <p className="mt-3 text-sm text-muted-foreground">
-              Enter the email or phone number you used to confirm you're on the
-              Kowope waitlist.
-            </p>
-          </div>
-
-          <form
-            onSubmit={handleCheckStatus}
-            className="mt-7 flex flex-col sm:flex-row gap-3"
-          >
-            <input
-              type="text"
-              inputMode="email"
-              autoComplete="email"
-              value={statusInput}
-              onChange={(e) => {
-                setStatusInput(e.target.value);
-                setCheckResult(null);
-              }}
-              placeholder="you@email.com or 080..."
-              className="flex-1 bg-card border-2 border-border rounded-2xl px-4 py-3.5 outline-none focus:border-primary transition-smooth font-semibold shadow-soft placeholder:text-muted-foreground/60"
-              aria-label="Email or phone number"
-            />
-            <Button
-              type="submit"
-              size="lg"
-              className="h-auto py-3.5 px-6 font-bold rounded-2xl shadow-soft bg-foreground text-background hover:opacity-90"
-            >
-              <Search className="w-4 h-4 mr-1.5" /> Check status
-            </Button>
-          </form>
-
-          {checkResult && (
-            <div
-              role="status"
-              aria-live="polite"
-              className={cn(
-                "mt-5 rounded-2xl border-2 p-5 shadow-soft animate-fade-in",
-                checkResult.found
-                  ? "bg-success/10 border-success/40"
-                  : "bg-card border-border"
-              )}
-            >
-              {checkResult.found ? (
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-success/20 grid place-items-center shrink-0">
-                    <CheckCircle2 className="w-5 h-5 text-success" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-success">You're on the list 🎉</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      We have <span className="font-semibold text-foreground">{checkResult.value}</span> saved.
-                      We'll email you the moment a slot opens for your group.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-muted grid place-items-center shrink-0">
-                    <XCircle className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold">We couldn't find you yet.</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      No signup found for{" "}
-                      <span className="font-semibold text-foreground">{checkResult.value}</span> on this device.
-                      Join the waitlist below — it only takes a few seconds.
-                    </p>
-                    <a
-                      href="#waitlist"
-                      className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline"
-                    >
-                      <Mail className="w-4 h-4" /> Join the waitlist
-                    </a>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            Status is checked on this device. If you signed up from another
-            phone or browser, check there or just rejoin — we'll dedupe you.
-          </p>
-        </div>
-      </section>
-
       {/* FAQ */}
       <section id="faq" className="py-20 lg:py-28">
         <div className="max-w-3xl mx-auto px-5 sm:px-8">
@@ -736,19 +385,17 @@ const Landing = () => {
           <div className="relative grid lg:grid-cols-[1.4fr_1fr] gap-8 items-center">
             <div>
               <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                Be first in line when we launch.
+                Start saving with your group today.
               </h2>
               <p className="mt-3 opacity-90 max-w-lg">
-                Join the waitlist and we'll invite your group as soon as a slot
-                opens. No spam — just one email when it's your turn.
+                Create an account, create a group (or join with an invite code), and start tracking contributions and payouts.
               </p>
             </div>
-            <a
-              href="#waitlist"
-              className="inline-flex items-center justify-center gap-2 bg-white text-primary font-bold py-4 px-6 rounded-2xl shadow-soft active:scale-[0.98] transition-smooth"
-            >
-              <Smartphone className="w-5 h-5" /> Join the waitlist
-            </a>
+            <Button asChild size="lg" className="h-12 rounded-2xl font-bold bg-white text-primary hover:opacity-95">
+              <Link to="/auth?mode=signup">
+                <Smartphone className="w-5 h-5" /> Create account
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -772,7 +419,7 @@ const Landing = () => {
             <a href="#faq" className="hover:text-foreground transition-smooth">
               FAQ
             </a>
-            <Link to="/get-started" className="hover:text-foreground transition-smooth">
+            <Link to="/auth" className="hover:text-foreground transition-smooth">
               Open app
             </Link>
           </div>

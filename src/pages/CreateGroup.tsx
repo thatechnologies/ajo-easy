@@ -23,6 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { PageHeader } from "@/components/PageHeader";
 import { formatNaira } from "@/components/Money";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import {
   CalendarDays,
   Users,
@@ -69,12 +70,39 @@ const formSchema = z.object({
     { message: "Start date can't be in the past" }
   ),
   order: z.enum(["random", "manual"], { required_error: "Choose payout order" }),
+  bankName: z.preprocess(
+    (v) => {
+      const s = typeof v === "string" ? v.trim() : "";
+      return s === "" ? undefined : s;
+    },
+    z.string().max(60, "Keep it under 60 characters").optional(),
+  ),
+  bankAccountNumber: z.preprocess(
+    (v) => {
+      const s = typeof v === "string" ? v.trim().replace(/\s/g, "") : "";
+      return s === "" ? undefined : s;
+    },
+    z
+      .string()
+      .regex(/^\d+$/, "Digits only")
+      .min(8, "Too short")
+      .max(20, "Too long")
+      .optional(),
+  ),
+  bankAccountName: z.preprocess(
+    (v) => {
+      const s = typeof v === "string" ? v.trim() : "";
+      return s === "" ? undefined : s;
+    },
+    z.string().max(80, "Keep it under 80 characters").optional(),
+  ),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 const CreateGroup = () => {
   const navigate = useNavigate();
+  const { markAdmin, user } = useAuth();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [created, setCreated] = useState<{
     data: FormValues;
@@ -93,31 +121,53 @@ const CreateGroup = () => {
       members: 8,
       startDate: new Date(),
       order: "random",
+      bankName: "",
+      bankAccountNumber: "",
+      bankAccountName: "",
     },
   });
 
   const values = form.watch();
 
   const handleNext = async () => {
+    if (user?.kyc_status !== "verified") {
+      toast({ title: "KYC required", description: "Verify your KYC before creating a group.", variant: "destructive" });
+      navigate("/kyc");
+      return;
+    }
     const valid = await form.trigger(["name", "amount", "frequency"]);
     if (valid) setStep(2);
   };
 
   const onSubmit = async (data: FormValues) => {
     try {
+      if (user?.kyc_status !== "verified") {
+        toast({ title: "KYC required", description: "Verify your KYC before creating a group.", variant: "destructive" });
+        navigate("/kyc");
+        return;
+      }
       const res = await apiCreateGroup({
         name: data.name,
         amount: data.amount,
         frequency: data.frequency,
         totalMembers: data.members,
         startDate: data.startDate.toISOString().slice(0, 10),
+        bankName: data.bankName,
+        bankAccountNumber: data.bankAccountNumber,
+        bankAccountName: data.bankAccountName,
       });
       const inviteLink = `${window.location.origin}/join-group?code=${res.inviteCode}`;
       setCreated({ data, inviteCode: res.inviteCode, inviteLink });
       setStep(3);
+      markAdmin();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Try again";
-      toast({ title: "Could not create group", description: message, variant: "destructive" });
+      if (message === "kyc_required") {
+        toast({ title: "KYC required", description: "Verify your KYC before creating a group.", variant: "destructive" });
+        navigate("/kyc");
+      } else {
+        toast({ title: "Could not create group", description: message, variant: "destructive" });
+      }
     }
   };
 
@@ -524,6 +574,81 @@ const CreateGroup = () => {
                     </FormItem>
                   )}
                 />
+
+                {/* Bank details */}
+                <div className="rounded-2xl bg-card border-2 border-border p-4 shadow-soft space-y-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Payout account (optional)
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      This is where members will send their contributions.
+                    </p>
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="bankName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Bank name
+                        </FormLabel>
+                        <FormControl>
+                          <input
+                            {...field}
+                            placeholder="e.g. Access Bank"
+                            className="w-full bg-background border-2 border-border rounded-2xl px-4 py-3.5 outline-none focus:border-primary transition-smooth font-semibold placeholder:text-muted-foreground/60"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="bankAccountNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Account number
+                        </FormLabel>
+                        <FormControl>
+                          <input
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            onBlur={field.onBlur}
+                            placeholder="e.g. 0123456789"
+                            inputMode="numeric"
+                            className="w-full bg-background border-2 border-border rounded-2xl px-4 py-3.5 outline-none focus:border-primary transition-smooth font-semibold placeholder:text-muted-foreground/60"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="bankAccountName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Account name
+                        </FormLabel>
+                        <FormControl>
+                          <input
+                            {...field}
+                            placeholder="e.g. Kowope Ajo"
+                            className="w-full bg-background border-2 border-border rounded-2xl px-4 py-3.5 outline-none focus:border-primary transition-smooth font-semibold placeholder:text-muted-foreground/60"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 {/* Summary */}
                 <div className="rounded-2xl bg-gradient-card border border-border p-4 shadow-soft space-y-2">

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/PageHeader";
-import { apiListGroups, apiSubmitContribution, type Group } from "@/lib/ajo-data";
+import { apiGetGroup, apiSubmitContribution, type Group } from "@/lib/ajo-data";
 import { Money, formatNaira } from "@/components/Money";
 import { CheckCircle2, Loader2, Copy, Check, Upload, Image as ImageIcon, X, Building2, Hash, User as UserIcon, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -28,8 +28,8 @@ const Pay = () => {
   useEffect(() => {
     if (!id) return;
     setLoadingGroup(true);
-    apiListGroups()
-      .then((groups) => setGroup(groups.find((g) => g.id === id) ?? null))
+    apiGetGroup(id)
+      .then((g) => setGroup(g))
       .catch((err: unknown) => {
         const message = err instanceof Error ? err.message : "Could not load group";
         toast({ title: "Failed to load group", description: message, variant: "destructive" });

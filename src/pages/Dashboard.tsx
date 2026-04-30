@@ -1,16 +1,31 @@
 import { useNavigate } from "react-router-dom";
-import { Plus, UserPlus, Wallet, ArrowUpRight, Calendar, Users, ChevronRight, Wifi, WifiOff } from "lucide-react";
+import { Plus, UserPlus, Wallet, ArrowUpRight, Calendar, Users, ChevronRight, Wifi, WifiOff, ArrowDownLeft } from "lucide-react";
 import { Money, formatNaira } from "@/components/Money";
-import { apiListGroups, type Group } from "@/lib/ajo-data";
+import { apiListGroups, apiListNotifications, type AppNotification, type Group } from "@/lib/ajo-data";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [online] = useState(true);
   const { user } = useAuth();
   const [groups, setGroups] = useState<Group[]>([]);
+  const [activity, setActivity] = useState<AppNotification[]>([]);
+  const [loadingActivity, setLoadingActivity] = useState(true);
+  const [kycOpen, setKycOpen] = useState(false);
 
   useEffect(() => {
     apiListGroups()
@@ -19,6 +34,22 @@ const Dashboard = () => {
         const message = err instanceof Error ? err.message : "Could not load groups";
         toast({ title: "Failed to load groups", description: message, variant: "destructive" });
       });
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    if (user.kyc_status === "verified") return;
+    if (window.sessionStorage.getItem("kowope:kyc:prompted") === "1") return;
+    window.sessionStorage.setItem("kowope:kyc:prompted", "1");
+    setKycOpen(true);
+  }, [user]);
+
+  useEffect(() => {
+    setLoadingActivity(true);
+    apiListNotifications({ limit: 6 })
+      .then((res) => setActivity(res.notifications))
+      .catch(() => setActivity([]))
+      .finally(() => setLoadingActivity(false));
   }, []);
 
   const totalContributed = useMemo(() => groups.reduce((s, g) => s + g.myContribution, 0), [groups]);
@@ -56,24 +87,24 @@ const Dashboard = () => {
       {/* Quick stats - overlap */}
       <div className="px-5 -mt-14 relative z-10 grid grid-cols-2 gap-3">
         <button
-          onClick={() => navigate("/create-group")}
+          onClick={() => (user?.kyc_status === "verified" ? navigate("/create-group") : navigate("/kyc"))}
           className="bg-card hover:bg-secondary/50 transition-smooth rounded-2xl p-4 shadow-card text-left active:scale-[0.98]"
         >
           <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center mb-3 shadow-soft">
             <Plus className="w-5 h-5 text-primary-foreground" strokeWidth={2.5} />
           </div>
           <p className="font-bold text-sm">Create Group</p>
-          <p className="text-[11px] text-muted-foreground">Start a new ajo</p>
+          <p className="text-[11px] text-muted-foreground">{user?.kyc_status === "verified" ? "Start a new ajo" : "Verify KYC first"}</p>
         </button>
         <button
-          onClick={() => navigate("/join-group")}
+          onClick={() => (user?.kyc_status === "verified" ? navigate("/join-group") : navigate("/kyc"))}
           className="bg-card hover:bg-secondary/50 transition-smooth rounded-2xl p-4 shadow-card text-left active:scale-[0.98]"
         >
           <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center mb-3 shadow-soft">
             <UserPlus className="w-5 h-5 text-accent-foreground" strokeWidth={2.5} />
           </div>
           <p className="font-bold text-sm">Join Group</p>
-          <p className="text-[11px] text-muted-foreground">Use invite code</p>
+          <p className="text-[11px] text-muted-foreground">{user?.kyc_status === "verified" ? "Use invite code" : "Verify KYC first"}</p>
         </button>
       </div>
 
@@ -93,6 +124,8 @@ const Dashboard = () => {
             <p className="text-[10px] text-muted-foreground mt-0.5">Due this week</p>
           </div>
         </div>
+
+        
 
         {/* Groups list */}
         <div>
@@ -153,7 +186,85 @@ const Dashboard = () => {
             })}
           </div>
         </div>
+
+        {/* Recent activity */}
+        <div>
+          <div className="flex items-center justify-between mb-3 px-1">
+            <h2 className="font-bold text-base">Recent activity</h2>
+          </div>
+          {loadingActivity ? (
+            <div className="text-sm text-muted-foreground text-center py-6">Loading…</div>
+          ) : activity.length === 0 ? (
+            <div className="text-sm text-muted-foreground text-center py-6">No activity yet.</div>
+          ) : (
+            <div className="space-y-2">
+              {activity.slice(0, 4).map((n) => {
+                const meta = (n.metadata ?? {}) as any;
+                const isPayout = n.type === "payout_recorded";
+                const amount = typeof meta.amount === "number" ? meta.amount : null;
+                const time = formatDistanceToNow(new Date(n.created_at), { addSuffix: true });
+                return (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => {
+                      if (n.type === "join_request_created") navigate("/admin");
+                      else if (n.type === "contribution_submitted") navigate("/payments");
+                      else if (n.group_id) navigate(`/group/${n.group_id}`);
+                      else navigate("/notifications");
+                    }}
+                    className="w-full text-left bg-card rounded-2xl p-3.5 shadow-soft border border-border/60 flex items-center gap-3 hover:bg-secondary/30 transition-smooth"
+                  >
+                    <div
+                      className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                        isPayout ? "bg-success/15" : "bg-primary/15",
+                      )}
+                    >
+                      {isPayout ? (
+                        <ArrowDownLeft className="w-5 h-5 text-success" />
+                      ) : (
+                        <ArrowUpRight className="w-5 h-5 text-primary" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm truncate">{n.title}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{n.message}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1 font-medium">{time}</p>
+                    </div>
+                    {amount !== null ? (
+                      <span className={cn("font-bold text-sm", isPayout ? "text-success" : "text-foreground")}>
+                        {isPayout ? "+" : "−"}
+                        {formatNaira(amount)}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
+
+      <AlertDialog open={kycOpen} onOpenChange={setKycOpen}>
+        <AlertDialogContent className="rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Verify your KYC</AlertDialogTitle>
+            <AlertDialogDescription>
+              You can browse the app, but you must verify your NIN before you can create or join groups.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setKycOpen(false)}>Later</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => navigate("/kyc")}
+              className="bg-gradient-primary text-primary-foreground"
+            >
+              Verify now
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
