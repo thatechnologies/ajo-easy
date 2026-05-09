@@ -31,7 +31,8 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<Landing />} />
+            <Route path="/" element={<Auth />} />
+            <Route path="/landing" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/signup" element={<Auth />} />
             <Route path="/kyc" element={<RequireAuth><Kyc /></RequireAuth>} />

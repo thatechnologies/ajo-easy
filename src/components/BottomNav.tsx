@@ -16,7 +16,7 @@ export const BottomNav = () => {
   const unreadCount = data?.unreadCount ?? 0;
   // Hide nav on onboarding screens
   const hide =
-    ["/", "/auth", "/signup", "/kyc"].includes(pathname) ||
+    ["/", "/auth", "/signup", "/kyc", "/landing"].includes(pathname) ||
     pathname.startsWith("/create-group") ||
     pathname.startsWith("/join-group") ||
     pathname.startsWith("/pay");
